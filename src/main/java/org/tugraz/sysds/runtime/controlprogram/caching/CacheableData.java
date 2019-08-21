@@ -8,9 +8,9 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
@@ -62,8 +62,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Each object of this class is a cache envelope for some large piece of data
- * called "cache block". For example, the body of a matrix can be the cache block.  
- * The term cache block refers strictly to the cacheable portion of the data object, 
+ * called "cache block". For example, the body of a matrix can be the cache block.
+ * The term cache block refers strictly to the cacheable portion of the data object,
  * often excluding metadata and auxiliary parameters, as defined in the subclasses.
  * Under the protection of the envelope, the data blob may be evicted to
  * the file system; then the subclass must set its reference to <code>null</code>
@@ -80,10 +80,10 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	// global constant configuration parameters
 	public static final long    CACHING_THRESHOLD = (long)Math.max(4*1024, //obj not s.t. caching
 		1e-5 * InfrastructureAnalyzer.getLocalMaxMemory());       //if below threshold [in bytes]
-	public static final double CACHING_BUFFER_SIZE = 0.15; 
-	public static final RPolicy CACHING_BUFFER_POLICY = RPolicy.FIFO; 
-	public static final boolean CACHING_BUFFER_PAGECACHE = false; 
-	public static final boolean CACHING_WRITE_CACHE_ON_READ = false;	
+	public static final double CACHING_BUFFER_SIZE = 0.15;
+	public static final RPolicy CACHING_BUFFER_POLICY = RPolicy.FIFO;
+	public static final boolean CACHING_BUFFER_PAGECACHE = false;
+	public static final boolean CACHING_WRITE_CACHE_ON_READ = false;
 	public static final String  CACHING_COUNTER_GROUP_NAME    = "SystemDS Caching Counters";
 	public static final String  CACHING_EVICTION_FILEEXTENSION = ".dat";
 	public static final boolean CACHING_ASYNC_FILECLEANUP = true;
@@ -93,20 +93,20 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	 * An object of class {@link CacheableData} can be in one of the following
 	 * five status types:
 	 *
-	 * <code>EMPTY</code>: Either there is no data blob at all, or the data blob  
+	 * <code>EMPTY</code>: Either there is no data blob at all, or the data blob
 	 * resides in a specified import file and has never been downloaded yet.
 	 * <code>READ</code>:   The data blob is in main memory; one or more threads are
 	 * referencing and reading it (shared "read-only" lock).  This status uses a
 	 * counter.  Eviction is NOT allowed.
 	 * <code>MODIFY</code>:   The data blob is in main memory; exactly one thread is
 	 * referencing and modifying it (exclusive "write" lock).  Eviction is NOT allowed.
-	 * <code>CACHED</code>:   The data blob is in main memory, and nobody is using nor referencing it. 
+	 * <code>CACHED</code>:   The data blob is in main memory, and nobody is using nor referencing it.
 	 * There is always an persistent recovery object for it
 	 **/
 	public enum CacheStatus {
-		EMPTY, 
-		READ, 
-		MODIFY, 
+		EMPTY,
+		READ,
+		MODIFY,
 		CACHED,
 		CACHED_NOWRITE,
 	}
@@ -140,7 +140,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 
 	/**
 	 * The unique (JVM-wide) ID of a cacheable data object; to ensure unique IDs across JVMs, we
-	 * concatenate filenames with a unique prefix (map task ID). 
+	 * concatenate filenames with a unique prefix (map task ID).
 	 */
 	private final long _uniqueID;
 	
@@ -158,7 +158,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	 * includes: 1) Matrix dimensions, if available 2) Number of non-zeros, if
 	 * available 3) Block dimensions, if applicable 4) InputInfo -- subsequent
 	 * operations that use this Matrix expect it to be in this format.
-	 * 
+	 *
 	 * When the matrix is written to HDFS (local file system, as well?), one
 	 * must get the OutputInfo that matches with InputInfo stored inside _mtd.
 	 */
@@ -167,13 +167,13 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	/** The name of HDFS file in which the data is backed up. */
 	protected String _hdfsFileName = null; // file name and path
 	
-	/** 
-	 * Flag that indicates whether or not hdfs file exists.It is used 
-	 * for improving the performance of "rmvar" instruction. When it has 
-	 * value <code>false</code>, one can skip file system existence 
+	/**
+	 * Flag that indicates whether or not hdfs file exists.It is used
+	 * for improving the performance of "rmvar" instruction. When it has
+	 * value <code>false</code>, one can skip file system existence
 	 * checks which can be expensive.
 	 */
-	private boolean _hdfsFileExists = false; 
+	private boolean _hdfsFileExists = false;
 
 	/** Information relevant to specific external file formats. */
 	private FileFormatProperties _formatProps = null;
@@ -201,7 +201,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	
 	/**
 	 * Basic constructor for any cacheable data.
-	 * 
+	 *
 	 * @param dt data type
 	 * @param vt value type
 	 */
@@ -215,22 +215,22 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	
 	/**
 	 * Copy constructor for cacheable data (of same type).
-	 * 
+	 *
 	 * @param that cacheable data object
 	 */
 	protected CacheableData(CacheableData<T> that) {
 		this( that.getDataType(), that.getValueType() );
 		_cleanupFlag = that._cleanupFlag;
 		_hdfsFileName = that._hdfsFileName;
-		_hdfsFileExists = that._hdfsFileExists; 
+		_hdfsFileExists = that._hdfsFileExists;
 		_gpuObjects = that._gpuObjects;
 	}
 
 	
 	/**
-	 * Enables or disables the cleanup of the associated 
+	 * Enables or disables the cleanup of the associated
 	 * data object on clearData().
-	 * 
+	 *
 	 * @param flag true if cleanup
 	 */
 	public void enableCleanup(boolean flag) {
@@ -238,9 +238,9 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	}
 
 	/**
-	 * Indicates if cleanup of the associated data object 
+	 * Indicates if cleanup of the associated data object
 	 * is enabled on clearData().
-	 * 
+	 *
 	 * @return true if cleanup enabled
 	 */
 	public boolean isCleanupEnabled() {
@@ -274,7 +274,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	 * <code>true</code> if the in-memory or evicted matrix may be different from
 	 * the matrix located at {@link #_hdfsFileName}; <code>false</code> if the two
 	 * matrices are supposed to be the same.
-	 * 
+	 *
 	 * @return true if dirty
 	 */
 	public boolean isDirty() {
@@ -375,13 +375,13 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	/**
 	 * Acquires a shared "read-only" lock, produces the reference to the cache block,
 	 * restores the cache block to main memory, reads from HDFS if needed.
-	 * 
+	 *
 	 * Synchronized because there might be parallel threads (parfor local) that
 	 * access the same object (in case it was created before the loop).
-	 * 
+	 *
 	 * In-Status:  EMPTY, EVICTABLE, EVICTED, READ;
 	 * Out-Status: READ(+1).
-	 * 
+	 *
 	 * @return cacheable data
 	 */
 	public T acquireRead() {
@@ -450,7 +450,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 					_data = readBlobFromRDD( getRDDHandle(), writeStatus );
 					
 					//mark for initial local write (prevent repeated execution of rdd operations)
-					_requiresLocalWrite = writeStatus.booleanValue() ? 
+					_requiresLocalWrite = writeStatus.booleanValue() ?
 						CACHING_WRITE_CACHE_ON_READ : true;
 				}
 				
@@ -477,7 +477,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 
 	 * In-Status:  EMPTY, EVICTABLE, EVICTED;
 	 * Out-Status: MODIFY.
-	 * 
+	 *
 	 * @param newData new data
 	 * @return cacheable data
 	 */
@@ -524,13 +524,13 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	/**
 	 * Releases the shared ("read-only") or exclusive ("write") lock.  Updates
 	 * size information, last-access time, metadata, etc.
-	 * 
+	 *
 	 * Synchronized because there might be parallel threads (parfor local) that
 	 * access the same object (in case it was created before the loop).
-	 * 
+	 *
 	 * In-Status:  READ, MODIFY;
 	 * Out-Status: READ(-1), EVICTABLE, EMPTY.
-	 * 
+	 *
 	 */
 	public void release() {
 		long t0 = DMLScript.STATISTICS ? System.nanoTime() : 0;
@@ -591,22 +591,22 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	 * Sets the cache block reference to <code>null</code>, abandons the old block.
 	 * Makes the "envelope" empty.  Run it to finalize the object (otherwise the
 	 * evicted cache block file may remain undeleted).
-	 * 
+	 *
 	 * In-Status:  EMPTY, EVICTABLE, EVICTED;
 	 * Out-Status: EMPTY.
-	 * 
+	 *
 	 */
-	public synchronized void clearData() 
+	public synchronized void clearData()
 	{
 		// check if cleanup enabled and possible 
-		if( !isCleanupEnabled() ) 
+		if( !isCleanupEnabled() )
 			return; // do nothing
 		if( !isAvailableToModify() )
 			throw new DMLRuntimeException("CacheableData (" + getDebugName() + ") not available to "
 					+ "modify. Status = " + _cacheStatus.name() + ".");
 		
 		// clear existing WB / FS representation (but prevent unnecessary probes)
-		if( !(isEmpty(true)||(_data!=null && isBelowCachingThreshold()) 
+		if( !(isEmpty(true)||(_data!=null && isBelowCachingThreshold())
 			  ||(_data!=null && !isCachingActive()) )) //additional condition for JMLC
 			freeEvictedBlob();
 
@@ -636,10 +636,10 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	
 	/**
 	 * Writes, or flushes, the cache block data to HDFS.
-	 * 
+	 *
 	 * In-Status:  EMPTY, EVICTABLE, EVICTED, READ;
 	 * Out-Status: EMPTY, EVICTABLE, EVICTED, READ.
-	 * 
+	 *
 	 * @param replication ?
 	 */
 	public synchronized void exportData( int replication ) {
@@ -665,11 +665,11 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	 * If all threads export the same data object concurrently it results in errors
 	 * because they all write to the same file. Efficiency for loops and parallel threads
 	 * is achieved by checking if the in-memory block is dirty.
-	 * 
+	 *
 	 * NOTE: MB: we do not use dfs copy from local (evicted) to HDFS because this would ignore
 	 * the output format and most importantly would bypass reblocking during write (which effects the
-	 * potential degree of parallelism). However, we copy files on HDFS if certain criteria are given.  
-	 * 
+	 * potential degree of parallelism). However, we copy files on HDFS if certain criteria are given.
+	 *
 	 * @param fName file name
 	 * @param outputFormat format
 	 * @param replication ?
@@ -712,7 +712,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 		
 		//actual export (note: no direct transfer of local copy in order to ensure blocking (and hence, parallelism))
 		if( isDirty() || !eqScheme ||
-			(pWrite && !isEqualOutputFormat(outputFormat)) ) 
+			(pWrite && !isEqualOutputFormat(outputFormat)) )
 		{
 			// CASE 1: dirty in-mem matrix or pWrite w/ different format (write matrix to fname; load into memory if evicted)
 			// a) get the matrix
@@ -736,7 +736,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 			//get object from cache
 			if( _data == null )
 				getCache();
-			acquire( false, _data==null ); //incl. read matrix if evicted	
+			acquire( false, _data==null ); //incl. read matrix if evicted
 			
 			// b) write the matrix 
 			try {
@@ -770,7 +770,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 			}
 		}
 		else if( getRDDHandle()!=null && getRDDHandle().isPending()
-			&& !getRDDHandle().isHDFSFile() 
+			&& !getRDDHandle().isHDFSFile()
 			&& !getRDDHandle().allowsShortCircuitRead() )
 		{
 			//CASE 3: pending rdd operation (other than checkpoints)
@@ -787,12 +787,12 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 				throw new DMLRuntimeException("Export to " + fName + " failed.", e);
 			}
 		}
-		else 
+		else
 		{
 			//CASE 4: data already in hdfs (do nothing, no need for export)
 			LOG.trace(this.getDebugName() + ": Skip export to hdfs since data already exists.");
 		}
-		  
+		
 		if( DMLScript.STATISTICS ){
 			long t1 = System.nanoTime();
 			CacheStatistics.incrementExportTime(t1-t0);
@@ -803,7 +803,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 
 	/**
 	 * Checks if the data blob reference points to some in-memory object.
-	 * This method is called when releasing the (last) lock. Do not call 
+	 * This method is called when releasing the (last) lock. Do not call
 	 * this method for a blob that has been evicted.
 	 *
 	 * @return <code>true</code> if the blob is in main memory and the
@@ -824,7 +824,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 		long begin = LOG.isTraceEnabled() ? System.currentTimeMillis() : 0;
 		
 		if( LOG.isTraceEnabled() )
-			LOG.trace ("CACHE: Restoring matrix...  " + hashCode() + "  HDFS path: " + 
+			LOG.trace ("CACHE: Restoring matrix...  " + hashCode() + "  HDFS path: " +
 						(_hdfsFileName == null ? "null" : _hdfsFileName) + ", Restore from path: " + cacheFilePathAndName);
 				
 		if (_data != null)
@@ -834,7 +834,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 			_data = readBlobFromCache(cacheFilePathAndName);
 		}
 		catch (IOException e) {
-			throw new DMLRuntimeException(cacheFilePathAndName + " : Restore failed.", e);	
+			throw new DMLRuntimeException(cacheFilePathAndName + " : Restore failed.", e);
 		}
 		
 		//check for success
@@ -857,7 +857,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 		String cacheFilePathAndName = getCacheFilePathAndName();
 		long begin = LOG.isTraceEnabled() ? System.currentTimeMillis() : 0;
 		if( LOG.isTraceEnabled() )
-			LOG.trace("CACHE: Freeing evicted matrix...  " + hashCode() + "  HDFS path: " + 
+			LOG.trace("CACHE: Freeing evicted matrix...  " + hashCode() + "  HDFS path: " +
 				(_hdfsFileName == null ? "null" : _hdfsFileName) + " Eviction path: " + cacheFilePathAndName);
 		
 		LazyWriteBuffer.deleteBlock(cacheFilePathAndName);
@@ -881,42 +881,41 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	@Override //Data
 	public synchronized String getDebugName() {
 		int maxLength = 23;
-		String debugNameEnding = (_hdfsFileName == null ? "null" : 
-			(_hdfsFileName.length() < maxLength ? _hdfsFileName : "..." + 
+		String debugNameEnding = (_hdfsFileName == null ? "null" :
+			(_hdfsFileName.length() < maxLength ? _hdfsFileName : "..." +
 				_hdfsFileName.substring (_hdfsFileName.length() - maxLength + 3)));
 		return hashCode() + " " + debugNameEnding;
 	}
 
-	protected T readBlobFromHDFS(String fname) 
-		throws IOException 
+	protected T readBlobFromHDFS(String fname)
+		throws IOException
 	{
 		MetaDataFormat iimd = (MetaDataFormat) _metaData;
 		DataCharacteristics dc = iimd.getDataCharacteristics();
-		return readBlobFromHDFS(fname, dc.getRows(), dc.getCols());
+		return readBlobFromHDFS(fname, dc.getDims());
 	}
 
-	protected abstract T readBlobFromHDFS(String fname, long rlen, long clen) 
-		throws IOException;
+	protected abstract T readBlobFromHDFS(String fname, long[] dims) throws IOException;
 
 	protected abstract T readBlobFromRDD(RDDObject rdd, MutableBoolean status)
 		throws IOException;
 
-	protected abstract void writeBlobToHDFS(String fname, String ofmt, int rep, FileFormatProperties fprop) 
+	protected abstract void writeBlobToHDFS(String fname, String ofmt, int rep, FileFormatProperties fprop)
 		throws IOException;
 
-	protected abstract void writeBlobFromRDDtoHDFS(RDDObject rdd, String fname, String ofmt) 
+	protected abstract void writeBlobFromRDDtoHDFS(RDDObject rdd, String fname, String ofmt)
 		throws IOException;
 
 	protected void writeMetaData (String filePathAndName, String outputFormat, FileFormatProperties formatProperties)
 		throws IOException
-	{		
+	{
 		MetaDataFormat iimd = (MetaDataFormat) _metaData;
 	
 		if (iimd == null)
 			throw new DMLRuntimeException("Unexpected error while writing mtd file (" + filePathAndName + ") -- metadata is null.");
 			
 		// Write the matrix to HDFS in requested format
-		OutputInfo oinfo = (outputFormat != null ? OutputInfo.stringToOutputInfo (outputFormat) 
+		OutputInfo oinfo = (outputFormat != null ? OutputInfo.stringToOutputInfo (outputFormat)
 			: InputInfo.getMatchingOutputInfo (iimd.getInputInfo ()));
 		
 		if ( oinfo != OutputInfo.MatrixMarketOutputInfo ) {
@@ -930,9 +929,9 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 			{
 				dc = new MatrixCharacteristics(dc.getRows(), dc.getCols(), ConfigurationManager.getBlocksize(), dc.getNonZeros());
 			}
-			
+
 			//write the actual meta data file
-			HDFSTool.writeMetaDataFile (filePathAndName + ".mtd", valueType, 
+			HDFSTool.writeMetaDataFile (filePathAndName + ".mtd", valueType,
 				getSchema(), dataType, dc, oinfo, formatProperties);
 		}
 	}
@@ -952,7 +951,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 				ret = false;
 			}
 		}
-		
+
 		return ret;
 	}
 	
@@ -962,7 +961,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	protected String getCacheFilePathAndName () {
 		if( _cacheFileName==null ) {
 			StringBuilder sb = new StringBuilder();
-			sb.append(CacheableData.cacheEvictionLocalFilePath); 
+			sb.append(CacheableData.cacheEvictionLocalFilePath);
 			sb.append(CacheableData.cacheEvictionLocalFilePrefix);
 			sb.append(String.format ("%09d", _uniqueID));
 			sb.append(CacheableData.CACHING_EVICTION_FILEEXTENSION);
@@ -976,7 +975,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	 * This method "acquires the lock" to ensure that the data blob is in main memory
 	 * (not evicted) while it is being accessed.  When called, the method will try to
 	 * restore the blob if it has been evicted.  There are two kinds of locks it may
-	 * acquire: a shared "read" lock (if the argument is <code>false</code>) or the 
+	 * acquire: a shared "read" lock (if the argument is <code>false</code>) or the
 	 * exclusive "modify" lock (if the argument is <code>true</code>).
 	 * The method can fail in three ways:
 	 * (1) if there is lock status conflict;
@@ -986,9 +985,9 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	 * its last-access timestamp.  For the shared "read" lock, acquiring a new lock
 	 * increments the associated count.  The "read" count has to be decremented once
 	 * the blob is no longer used, which may re-enable eviction.  This method has to
-	 * be called only once per matrix operation and coupled with {@link #release()}, 
+	 * be called only once per matrix operation and coupled with {@link #release()},
 	 * because it increments the lock count and the other method decrements this count.
-	 * 
+	 *
 	 * @param isModify : <code>true</code> for the exclusive "modify" lock,
 	 *     <code>false</code> for a shared "read" lock.
 	 * @param restore true if restore
@@ -1030,7 +1029,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	 * called only once per process and coupled with {@link #acquire(boolean, boolean)},
 	 * because it decrements the lock count and the other method increments
 	 * the lock count.
-	 * 
+	 *
 	 * @param cacheNoWrite ?
 	 */
 	protected void release(boolean cacheNoWrite)
@@ -1103,10 +1102,10 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 		_numReadThreads --;
 		if (_numReadThreads == 0) {
 			if( cacheNoWrite )
-				_cacheStatus = (doesBlobExist ? 
+				_cacheStatus = (doesBlobExist ?
 					CacheStatus.CACHED_NOWRITE : CacheStatus.EMPTY);
 			else
-				_cacheStatus = (doesBlobExist ? 
+				_cacheStatus = (doesBlobExist ?
 					CacheStatus.CACHED : CacheStatus.EMPTY);
 		}
 	}
@@ -1116,7 +1115,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	}
 	
 	protected boolean isAvailableToModify() {
-		return (   _cacheStatus == CacheStatus.EMPTY 
+		return (   _cacheStatus == CacheStatus.EMPTY
 				|| _cacheStatus == CacheStatus.CACHED
 				|| _cacheStatus == CacheStatus.CACHED_NOWRITE);
 	}
@@ -1130,7 +1129,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	
 	/**
 	 * Creates a new cache soft reference to the currently
-	 * referenced cache block.  
+	 * referenced cache block.
 	 */
 	protected void createCache( ) {
 		if( _cache == null || _cache.get() == null )
@@ -1190,7 +1189,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	
 	/**
 	 * Deletes the DML-script-specific caching working dir.
-	 * 
+	 *
 	 * @param withDir if true, delete directory
 	 */
 	public synchronized static void cleanupCacheDir(boolean withDir)
@@ -1217,10 +1216,10 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	
 	/**
 	 * Inits caching with the default uuid of DMLScript
-	 * 
+	 *
 	 * @throws IOException if IOException occurs
 	 */
-	public synchronized static void initCaching() 
+	public synchronized static void initCaching()
 		throws IOException
 	{
 		initCaching(DMLScript.getUUID());
@@ -1228,13 +1227,13 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	
 	/**
 	 * Creates the DML-script-specific caching working dir.
-	 * 
+	 *
 	 * Takes the UUID in order to allow for custom uuid, e.g., for remote parfor caching
-	 * 
+	 *
 	 * @param uuid ID
 	 * @throws IOException if IOException occurs
 	 */
-	public synchronized static void initCaching( String uuid ) 
+	public synchronized static void initCaching( String uuid )
 		throws IOException
 	{
 		try
@@ -1277,7 +1276,7 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 				new Path(_hdfsFileName), new Path(fName));
 			
 			//export or rename to target file on hdfs
-			if( isDirty() || !eqScheme || (!isEqualOutputFormat(outputFormat) && isEmpty(true)) 
+			if( isDirty() || !eqScheme || (!isEqualOutputFormat(outputFormat) && isEmpty(true))
 				|| (getRDDHandle()!=null && !HDFSTool.existsFileOnHDFS(_hdfsFileName)) )
 			{
 				exportData(fName, outputFormat);

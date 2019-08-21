@@ -318,7 +318,7 @@ public class Data extends Lop
 		if ( operation == OperationTypes.WRITE ) {
 			sb.append( OPERAND_DELIMITOR );
 			String fmt = "";
-			if ( getDataType() == DataType.MATRIX || getDataType() == DataType.FRAME ) {
+			if (getDataType() == DataType.MATRIX || getDataType() == DataType.FRAME) {
 				if ( oparams.getFormat() == Format.MM )
 					fmt = "matrixmarket";
 				else if (oparams.getFormat() == Format.TEXT)
