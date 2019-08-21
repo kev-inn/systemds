@@ -732,9 +732,9 @@ public class UtilFunctions
 		return ret;
 	}
 
-	public static void getBlockBounds(TensorIndexes ix, long[] dims, int[] blen, int[] lower, int[] upper) {
-		for (int i = 0; i < blen.length; i++) {
-			lower[i] = (int) (ix.getIndex(i) - 1) * blen[i];
+	public static void getBlockBounds(TensorIndexes ix, long[] dims, int blen, int[] lower, int[] upper) {
+		for (int i = 0; i < dims.length; i++) {
+			lower[i] = (int) (ix.getIndex(i) - 1) * blen;
 			upper[i] = (int) (lower[i] + dims[i] - 1);
 		}
 		upper[upper.length - 1]++;

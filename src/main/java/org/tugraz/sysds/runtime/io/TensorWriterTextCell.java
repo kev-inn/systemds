@@ -31,7 +31,7 @@ import java.io.OutputStreamWriter;
 
 public class TensorWriterTextCell extends TensorWriter {
 	@Override
-	public void writeTensorToHDFS(TensorBlock src, String fname, long[] dims, int[] blen) throws IOException {
+	public void writeTensorToHDFS(TensorBlock src, String fname, long[] dims, int blen) throws IOException {
 		//validity check matrix dimensions
 		if (src.getNumDims() != dims.length)
 			throw new IOException("Tensor number of dimensions mismatch with metadata: " + src.getNumDims() + " vs " + dims.length);

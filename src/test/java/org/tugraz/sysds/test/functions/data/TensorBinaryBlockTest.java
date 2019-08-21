@@ -17,20 +17,16 @@
 
 package org.tugraz.sysds.test.functions.data;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.tugraz.sysds.common.Types.ValueType;
 import org.tugraz.sysds.runtime.DMLRuntimeException;
 import org.tugraz.sysds.runtime.data.TensorBlock;
 import org.tugraz.sysds.runtime.io.TensorReaderBinaryBlock;
 import org.tugraz.sysds.runtime.io.TensorWriterBinaryBlock;
-import org.tugraz.sysds.runtime.matrix.data.MatrixBlock;
-import org.tugraz.sysds.runtime.util.DataConverter;
-import org.tugraz.sysds.test.TestUtils;
 
 import java.util.Arrays;
 
-import static org.tugraz.sysds.test.TestUtils.compareTensorBlocks;
+import static org.tugraz.sysds.test.TestUtils.*;
 
 
 public class TensorBinaryBlockTest {
@@ -110,9 +106,9 @@ public class TensorBinaryBlockTest {
 		try {
 			long[] dims = Arrays.stream(tb1.getDims()).mapToLong(i -> i).toArray();
 			TensorWriterBinaryBlock writer = new TensorWriterBinaryBlock();
-			writer.writeTensorToHDFS(tb1, "a", dims, new int[]{1024, 1024});
+			writer.writeTensorToHDFS(tb1, "a", dims, 1024);
 			TensorReaderBinaryBlock reader = new TensorReaderBinaryBlock();
-			return reader.readTensorFromHDFS("a", dims, new int[]{1024, 1024}, new ValueType[]{tb1.getValueType()});
+			return reader.readTensorFromHDFS("a", dims, 1024, new ValueType[]{tb1.getValueType()});
 		}
 		catch (Exception ex) {
 			throw new DMLRuntimeException(ex);
@@ -123,22 +119,12 @@ public class TensorBinaryBlockTest {
 		try {
 			long[] dims = Arrays.stream(tb1.getDims()).mapToLong(i -> i).toArray();
 			TensorWriterBinaryBlock writer = new TensorWriterBinaryBlock();
-			writer.writeTensorToHDFS(tb1, "a", dims, new int[]{1024, 1024});
+			writer.writeTensorToHDFS(tb1, "a", dims, 1024);
 			TensorReaderBinaryBlock reader = new TensorReaderBinaryBlock();
-			return reader.readTensorFromHDFS("a", dims, new int[]{1024, 1024}, tb1.getSchema());
+			return reader.readTensorFromHDFS("a", dims, 1024, tb1.getSchema());
 		}
 		catch (Exception ex) {
 			throw new DMLRuntimeException(ex);
 		}
-	}
-
-	private TensorBlock createBasicTensor(ValueType vt, int rows, int cols, double sparsity) {
-		return DataConverter.convertToTensorBlock(TestUtils.round(
-				MatrixBlock.randOperations(rows, cols, sparsity, 0, 10, "uniform", 7)), vt, true);
-	}
-
-	private TensorBlock createDataTensor(ValueType vt, int rows, int cols, double sparsity) {
-		return DataConverter.convertToTensorBlock(TestUtils.round(
-				MatrixBlock.randOperations(rows, cols, sparsity, 0, 10, "uniform", 7)), vt, false);
 	}
 }

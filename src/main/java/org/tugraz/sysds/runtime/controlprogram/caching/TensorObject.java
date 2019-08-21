@@ -120,8 +120,7 @@ public class TensorObject extends CacheableData<TensorBlock> {
 			begin = System.currentTimeMillis();
 		}
 
-		int[] blen = dc.getBlockSizes();
-
+		int blen = dc.getBlocksize();
 		//read tensor and maintain meta data
 		TensorBlock newData = DataConverter.readTensorFromHDFS(fname, iimd.getInputInfo(), dims, blen, getSchema());
 		setHDFSFileExists(true);

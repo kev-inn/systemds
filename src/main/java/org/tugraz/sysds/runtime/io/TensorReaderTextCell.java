@@ -40,7 +40,7 @@ public class TensorReaderTextCell extends TensorReader {
 
 	@Override
 	public TensorBlock readTensorFromHDFS(String fname, long[] dims,
-			int[] blen, ValueType[] schema) throws IOException, DMLRuntimeException {
+			int blen, ValueType[] schema) throws IOException, DMLRuntimeException {
 		//prepare file access
 		JobConf job = new JobConf(ConfigurationManager.getCachedJobConf());
 		Path path = new Path(fname);

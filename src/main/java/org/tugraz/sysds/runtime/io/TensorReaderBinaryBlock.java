@@ -34,7 +34,7 @@ import java.util.Arrays;
 public class TensorReaderBinaryBlock extends TensorReader {
 	@Override
 	public TensorBlock readTensorFromHDFS(String fname, long[] dims,
-			int[] blen, ValueType[] schema) throws IOException, DMLRuntimeException {
+			int blen, ValueType[] schema) throws IOException, DMLRuntimeException {
 		//prepare file access
 		JobConf job = new JobConf(ConfigurationManager.getCachedJobConf());
 		Path path = new Path(fname);
@@ -48,7 +48,7 @@ public class TensorReaderBinaryBlock extends TensorReader {
 	}
 
 	private TensorBlock readBinaryBlockTensorFromHDFS(Path path, JobConf job, FileSystem fs, long[] dims,
-			int[] blen, ValueType[] schema) throws IOException {
+			int blen, ValueType[] schema) throws IOException {
 		int[] idims = Arrays.stream(dims).mapToInt(i -> (int) i).toArray();
 		TensorBlock ret;
 		if (schema.length == 1)
@@ -67,7 +67,7 @@ public class TensorReaderBinaryBlock extends TensorReader {
 					if (value.isEmpty(false))
 						continue;
 
-					int[] lower = new int[blen.length];
+					int[] lower = new int[dims.length];
 					int[] upper = new int[lower.length];
 					UtilFunctions.getBlockBounds(key, dims, blen, lower, upper);
 

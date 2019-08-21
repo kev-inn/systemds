@@ -19,18 +19,14 @@ package org.tugraz.sysds.test.component.tensor;
 import java.io.DataInput;
 import java.io.DataOutput;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.tugraz.sysds.common.Types.ValueType;
 import org.tugraz.sysds.runtime.DMLRuntimeException;
 import org.tugraz.sysds.runtime.controlprogram.caching.CacheDataInput;
 import org.tugraz.sysds.runtime.controlprogram.caching.CacheDataOutput;
 import org.tugraz.sysds.runtime.data.TensorBlock;
-import org.tugraz.sysds.runtime.matrix.data.MatrixBlock;
-import org.tugraz.sysds.runtime.util.DataConverter;
-import org.tugraz.sysds.test.TestUtils;
 
-import static org.tugraz.sysds.test.TestUtils.compareTensorBlocks;
+import static org.tugraz.sysds.test.TestUtils.*;
 
 
 public class TensorSerializationTest 
@@ -111,15 +107,5 @@ public class TensorSerializationTest
 		catch(Exception ex) {
 			throw new DMLRuntimeException(ex);
 		}
-	}
-
-	private TensorBlock createBasicTensor(ValueType vt, int rows, int cols, double sparsity) {
-		return DataConverter.convertToTensorBlock(TestUtils.round(
-				MatrixBlock.randOperations(rows, cols, sparsity, 0, 1, "uniform", 7)), vt, true);
-	}
-
-	private TensorBlock createDataTensor(ValueType vt, int rows, int cols, double sparsity) {
-		return DataConverter.convertToTensorBlock(TestUtils.round(
-				MatrixBlock.randOperations(rows, cols, sparsity, 0, 1, "uniform", 7)), vt, false);
 	}
 }

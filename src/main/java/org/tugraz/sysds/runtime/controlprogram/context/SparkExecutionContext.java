@@ -1016,8 +1016,7 @@ public class SparkExecutionContext extends ExecutionContext
 	 * @param rdd rdd object
 	 * @param rlen number of rows
 	 * @param clen number of columns
-	 * @param blen number of rows in a block
-	 * @param blen number of columns in a block
+	 * @param blen block length
 	 * @param nnz number of non-zeros
 	 * @return matrix block
 	 */
@@ -1038,8 +1037,7 @@ public class SparkExecutionContext extends ExecutionContext
 	 * @param rdd JavaPairRDD for matrix block
 	 * @param rlen number of rows
 	 * @param clen number of columns
-	 * @param blen number of rows in a block
-	 * @param blen number of columns in a block
+	 * @param blen block length
 	 * @param nnz number of non-zeros
 	 * @return matrix block
 	 */

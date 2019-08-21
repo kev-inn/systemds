@@ -28,7 +28,7 @@ import java.io.EOFException;
 import java.io.IOException;
 
 public abstract class TensorReader {
-	public abstract TensorBlock readTensorFromHDFS(String fname, long[] dims, int[] blen, ValueType[] schema)
+	public abstract TensorBlock readTensorFromHDFS(String fname, long[] dims, int blen, ValueType[] schema)
 			throws IOException, DMLRuntimeException;
 
 	protected static void checkValidInputFile(FileSystem fs, Path path)

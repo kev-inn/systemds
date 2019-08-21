@@ -33,7 +33,7 @@ public class TensorWriterBinaryBlock extends TensorWriter {
 	//TODO replication
 
 	@Override
-	public void writeTensorToHDFS(TensorBlock src, String fname, long[] dims, int[] blen) throws IOException {
+	public void writeTensorToHDFS(TensorBlock src, String fname, long[] dims, int blen) throws IOException {
 		//prepare file access
 		JobConf job = new JobConf(ConfigurationManager.getCachedJobConf());
 		Path path = new Path(fname);
@@ -54,7 +54,7 @@ public class TensorWriterBinaryBlock extends TensorWriter {
 
 	@SuppressWarnings("deprecation")
 	private void writeBinaryBlockMatrixToHDFS(Path path, JobConf job, FileSystem fs, TensorBlock src, long[] dims,
-			int[] blen) throws IOException {
+			int blen) throws IOException {
 		SequenceFile.Writer writer = new SequenceFile.Writer(fs, job, path, TensorIndexes.class, TensorBlock.class);
 
 		try {
@@ -65,21 +65,21 @@ public class TensorWriterBinaryBlock extends TensorWriter {
 							"] out of range [1:" + dims[i] + "].");
 			}
 			long numBlocks = 1;
-			for (int i = 0; i < blen.length; i++) {
-				numBlocks *= Math.max((long) Math.ceil((double) dims[i] / blen[i]), 1);
+			for (long dim : dims) {
+				numBlocks *= Math.max((long) Math.ceil((double) dim / blen), 1);
 			}
 
 			for (int i = 0; i < numBlocks; i++) {
 				int[] offsets = new int[dims.length];
 				long blockIndex = i;
-				long[] tix = new long[blen.length];
+				long[] tix = new long[dims.length];
 				int[] blockDims = new int[dims.length];
-				for (int j = blen.length - 1; j >= 0; j--) {
-					long numDimBlocks = Math.max((long) Math.ceil((double)src.getDim(j) / blen[j]), 1);
+				for (int j = dims.length - 1; j >= 0; j--) {
+					long numDimBlocks = Math.max((long) Math.ceil((double)src.getDim(j) / blen), 1);
 					tix[j] = 1 + (blockIndex % numDimBlocks);
 					blockIndex /= numDimBlocks;
-					offsets[j] = ((int) tix[j] - 1) * blen[j];
-					blockDims[j] = (tix[j] * blen[j] < src.getDim(j)) ? blen[j] : src.getDim(j) - offsets[j];
+					offsets[j] = ((int) tix[j] - 1) * blen;
+					blockDims[j] = (tix[j] * blen < src.getDim(j)) ? blen : src.getDim(j) - offsets[j];
 				}
 				TensorIndexes indx = new TensorIndexes(tix);
 				TensorBlock block;

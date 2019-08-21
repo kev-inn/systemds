@@ -368,6 +368,16 @@ public class TestUtils
 				Assert.assertEquals(Double.valueOf(tb1.get(i, j)),
 						Double.valueOf(tb2.get(i, j)));
 	}
+	
+	public static TensorBlock createBasicTensor(ValueType vt, int rows, int cols, double sparsity) {
+		return DataConverter.convertToTensorBlock(TestUtils.round(
+				MatrixBlock.randOperations(rows, cols, sparsity, 0, 10, "uniform", 7)), vt, true);
+	}
+	
+	public static TensorBlock createDataTensor(ValueType vt, int rows, int cols, double sparsity) {
+		return DataConverter.convertToTensorBlock(TestUtils.round(
+				MatrixBlock.randOperations(rows, cols, sparsity, 0, 10, "uniform", 7)), vt, false);
+	}
 
 	/**
 	 * Reads values from a matrix file in HDFS in DML format
