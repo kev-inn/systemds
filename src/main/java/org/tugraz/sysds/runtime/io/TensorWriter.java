@@ -25,5 +25,5 @@ public abstract class TensorWriter {
 	protected static final String BASIC_TENSOR_IDENTIFIER = "BASIC";
 	protected static final String DATA_TENSOR_IDENTIFIER = "DATA";
 
-	public abstract void writeTensorToHDFS(TensorBlock src, String fname, long[] dims, int[] blen) throws IOException;
+	public abstract void writeTensorToHDFS(TensorBlock src, String fname, int[] dims, int[] blen) throws IOException;
 }

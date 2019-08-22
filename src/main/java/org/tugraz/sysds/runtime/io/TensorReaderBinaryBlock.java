@@ -19,25 +19,30 @@ package org.tugraz.sysds.runtime.io;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.JobConf;
+import org.tugraz.sysds.conf.ConfigurationManager;
 import org.tugraz.sysds.runtime.DMLRuntimeException;
 import org.tugraz.sysds.runtime.data.TensorBlock;
-import org.tugraz.sysds.runtime.util.HDFSTool;
 
-import java.io.EOFException;
 import java.io.IOException;
 
-public abstract class TensorReader {
-	public abstract TensorBlock readTensorFromHDFS(String fname, int[] dims, int[] blen)
-			throws IOException, DMLRuntimeException;
+public class TensorReaderBinaryBlock extends TensorReader {
+	@Override
+	public TensorBlock readTensorFromHDFS(String fname, int[] dims,
+			int[] blen) throws IOException, DMLRuntimeException {
+		//prepare file access
+		JobConf job = new JobConf(ConfigurationManager.getCachedJobConf());
+		Path path = new Path(fname);
+		FileSystem fs = IOUtilFunctions.getFileSystem(path, job);
 
-	protected static void checkValidInputFile(FileSystem fs, Path path)
-			throws IOException {
-		//check non-existing file
-		if (!fs.exists(path))
-			throw new IOException("File " + path.toString() + " does not exist on HDFS/LFS.");
+		//check existence and non-empty file
+		checkValidInputFile(fs, path);
 
-		//check for empty file
-		if (HDFSTool.isFileEmpty(fs, path))
-			throw new EOFException("Empty input file " + path.toString() + ".");
+		//core read
+		return readBinaryBlockTensorFromHDFS(path, job, fs, dims, blen);
+	}
+
+	private TensorBlock readBinaryBlockTensorFromHDFS(Path path, JobConf job, FileSystem fs, int[] dims, int[] blen) {
+		return null;
 	}
 }

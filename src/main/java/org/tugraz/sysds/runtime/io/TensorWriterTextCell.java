@@ -25,6 +25,7 @@ import org.tugraz.sysds.runtime.data.BasicTensor;
 import org.tugraz.sysds.runtime.data.DataTensor;
 import org.tugraz.sysds.runtime.data.TensorBlock;
 import org.tugraz.sysds.runtime.util.HDFSTool;
+import org.tugraz.sysds.runtime.util.UtilFunctions;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -32,7 +33,7 @@ import java.io.OutputStreamWriter;
 
 public class TensorWriterTextCell extends TensorWriter {
 	@Override
-	public void writeTensorToHDFS(TensorBlock src, String fname, long[] dims, int[] blen) throws IOException {
+	public void writeTensorToHDFS(TensorBlock src, String fname, int[] dims, int[] blen) throws IOException {
 		//validity check matrix dimensions
 		if (src.getNumDims() != dims.length)
 			throw new IOException("Tensor number of dimensions mismatch with metadata: " + src.getNumDims() + " vs " + dims.length);
@@ -56,12 +57,14 @@ public class TensorWriterTextCell extends TensorWriter {
 	}
 
 	protected static void writeTextCellTensorToHDFS(Path path, JobConf job, FileSystem fs, TensorBlock src,
-			long[] dims) throws IOException {
+			int[] dims) throws IOException {
 		try (BufferedWriter br = new BufferedWriter(new OutputStreamWriter(fs.create(path, true)))) {
 			//for obj reuse and preventing repeated buffer re-allocations
 			StringBuilder sb = new StringBuilder();
+			boolean isBasicTensor = false;
 
 			if (src instanceof BasicTensor) {
+				isBasicTensor = true;
 				sb.append(BASIC_TENSOR_IDENTIFIER).append(' ');
 				sb.append(((BasicTensor) src).getValueType().toString()).append('\n');
 			}
@@ -75,12 +78,20 @@ public class TensorWriterTextCell extends TensorWriter {
 
 			int[] ix = new int[dims.length];
 			for (long i = 0; i < src.getLength(); i++) {
-				for (int j : ix)
-					sb.append(j + 1).append(' ');
+				Object obj = src.get(ix);
+				boolean skip = false;
+				if (isBasicTensor)
+					skip = UtilFunctions.objectToDouble(((BasicTensor) src).getValueType(), obj) == 0.0;
+				else
+					skip = UtilFunctions.objectToDouble(((DataTensor) src).getColValueType(ix[1]), obj) == 0.0;
+				if (!skip) {
+					for (int j : ix)
+						sb.append(j + 1).append(' ');
+					sb.append(src.get(ix)).append('\n');
+					br.write(sb.toString());
+					sb.setLength(0);
+				}
 				src.getNextIndexes(ix);
-				sb.append(src.get(ix)).append('\n');
-				br.write(sb.toString());
-				sb.setLength(0);
 			}
 
 			//handle empty result
