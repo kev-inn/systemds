@@ -17,13 +17,24 @@
 
 package org.tugraz.sysds.runtime.io;
 
-import org.tugraz.sysds.runtime.data.TensorBlock;
+import org.tugraz.sysds.runtime.DMLRuntimeException;
+import org.tugraz.sysds.runtime.matrix.data.InputInfo;
 
-import java.io.IOException;
+public class TensorReaderFactory {
 
-public abstract class TensorWriter {
-	protected static final String BASIC_TENSOR_IDENTIFIER = "BASIC";
-	protected static final String DATA_TENSOR_IDENTIFIER = "DATA";
+	public static TensorReader createTensorReader(InputInfo iinfo) {
+		TensorReader reader;
 
-	public abstract void writeTensorToHDFS(TensorBlock src, String fname, long[] dims, int[] blen) throws IOException;
+		if (iinfo == InputInfo.TextCellInputInfo) {
+			reader = new TensorReaderTextCell();
+		}
+		else if (iinfo == InputInfo.BinaryBlockInputInfo) {
+			reader = new TensorReaderBinaryBlock();
+		}
+		else {
+			throw new DMLRuntimeException("Failed to create tensor reader for unknown output info: "
+					+ InputInfo.inputInfoToString(iinfo));
+		}
+		return reader;
+	}
 }

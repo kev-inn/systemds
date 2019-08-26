@@ -44,12 +44,9 @@ public class LibTensorReorg {
 		for (int dim : dims) {
 			length *= dim;
 		}
-		int[] inDims = new int[in.getNumDims()];
+		int[] inDims = in.getDims();
 		//check validity
 		if(in.getLength() != length) {
-			for (int i = 0; i < in.getNumDims(); i++) {
-				inDims[i] = in.getDim(i);
-			}
 			throw new DMLRuntimeException("Reshape tensor requires consistent numbers of input/output cells (" +
 					Arrays.toString(inDims) + ", " + Arrays.toString(dims) + ").");
 		}

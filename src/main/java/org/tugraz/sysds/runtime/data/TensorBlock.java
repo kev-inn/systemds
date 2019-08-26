@@ -51,6 +51,10 @@ public abstract class TensorBlock implements CacheBlock
 		return _dims[i];
 	}
 
+	public int[] getDims() {
+		return _dims;
+	}
+
 	/**
 	 * Calculates the next index array. Note that if the given index array was the last element, the next index will
 	 * be the first one.

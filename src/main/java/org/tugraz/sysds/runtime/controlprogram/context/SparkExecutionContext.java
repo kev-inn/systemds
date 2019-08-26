@@ -478,10 +478,7 @@ public class SparkExecutionContext extends ExecutionContext
 				fromFile = true;*/
 			} else { //default case
 				TensorBlock tb = to.acquireRead(); //pin matrix in memory
-				int[] blen = new int[dc.getNumDims()];
-				for (int i = 0; i < blen.length; i++) {
-					blen[i] = (int) dc.getBlockSize(i);
-				}
+				int[] blen = dc.getBlockSizes();
 				rdd = toTensorJavaPairRDD(sc, tb, blen, numParts, inclEmpty);
 				to.release(); //unpin matrix
 				_parRDDs.registerRDD(rdd.id(), OptimizerUtils.estimatePartitionedSizeExactSparsity(dc), true);
@@ -858,9 +855,7 @@ public class SparkExecutionContext extends ExecutionContext
 			list = Arrays.asList(new Tuple2<>(new TensorIndexes(ix), src));
 		} else {
 			// TODO rows and columns for matrix characteristics
-			long[] dims = new long[src.getNumDims()];
-			for (int i = 0; i < src.getNumDims(); i++)
-				dims[i] = src.getDim(i);
+			long[] dims = Arrays.stream(src.getDims()).mapToLong(i -> i).toArray();
 			TensorCharacteristics mc = new TensorCharacteristics(dims, src.getNonZeros());
 			list = LongStream.range(0, mc.getNumBlocks()).parallel()
 					.mapToObj(i -> createIndexedTensorBlock(src, mc, i))
@@ -1136,10 +1131,7 @@ public class SparkExecutionContext extends ExecutionContext
 		long t0 = DMLScript.STATISTICS ? System.nanoTime() : 0;
 
 		// TODO special case single block
-		int[] idims = new int[dc.getNumDims()];
-		for (int i = 0; i < idims.length; i++) {
-			idims[i] = (int)dc.getDim(i);
-		}
+		int[] idims = Arrays.stream(dc.getDims()).mapToInt(i -> (int) i).toArray();
 		// TODO asynchronous allocation
 		List<Tuple2<TensorIndexes, TensorBlock>> list = rdd.collect();
 		ValueType vt = ((BasicTensor) list.get(0)._2).getValueType();

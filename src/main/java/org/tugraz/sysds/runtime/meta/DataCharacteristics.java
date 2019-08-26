@@ -107,6 +107,10 @@ public abstract class DataCharacteristics implements Serializable {
 		throw new DMLRuntimeException("DataCharacteristics.getDim(int): should never get called in the base class");
 	}
 
+	public long[] getDims() {
+		throw new DMLRuntimeException("DataCharacteristics.getDims(): should never get called in the base class");
+	}
+
 	public TensorCharacteristics setDim(int i, long dim) {
 		throw new DMLRuntimeException("DataCharacteristics.setDim(int, long): should never get called in the base class");
 	}
@@ -117,6 +121,10 @@ public abstract class DataCharacteristics implements Serializable {
 
 	public long getBlockSize(int i) {
 		throw new DMLRuntimeException("DataCharacteristics.getBlockSize(int): should never get called in the base class");
+	}
+
+	public int[] getBlockSizes() {
+		throw new DMLRuntimeException("DataCharacteristics.getBlockSizes(): should never get called in the base class");
 	}
 
 	public DataCharacteristics setBlockSize(int blen) {

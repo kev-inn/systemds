@@ -34,7 +34,7 @@ public class TensorWriterBinaryBlock extends TensorWriter {
 	//TODO replication
 
 	@Override
-	public void writeTensorToHDFS(TensorBlock src, String fname, int[] dims, int[] blen) throws IOException {
+	public void writeTensorToHDFS(TensorBlock src, String fname, long[] dims, int[] blen) throws IOException {
 		//prepare file access
 		JobConf job = new JobConf(ConfigurationManager.getCachedJobConf());
 		Path path = new Path(fname);
@@ -53,7 +53,8 @@ public class TensorWriterBinaryBlock extends TensorWriter {
 		IOUtilFunctions.deleteCrcFilesFromLocalFileSystem(fs, path);
 	}
 
-	private void writeBinaryBlockMatrixToHDFS(Path path, JobConf job, FileSystem fs, TensorBlock src, int[] dims,
+	@SuppressWarnings("deprecation")
+	private void writeBinaryBlockMatrixToHDFS(Path path, JobConf job, FileSystem fs, TensorBlock src, long[] dims,
 			int[] blen) throws IOException {
 		//TODO DataTensor
 		SequenceFile.Writer writer = new SequenceFile.Writer(fs, job, path, TensorIndexes.class, BasicTensor.class);
@@ -77,7 +78,7 @@ public class TensorWriterBinaryBlock extends TensorWriter {
 				long[] tix = new long[blen.length];
 				int[] blockDims = new int[dims.length];
 				for (int j = blen.length - 1; j >= 0; j--) {
-					tix[j] = 1 + (blockIndex % blen[j]);
+					tix[j] = 1 + (blockIndex % Math.max((long) Math.ceil((double)src.getDim(j) / blen[j]), 1));
 					blockIndex /= blen[j];
 					offsets[j] = ((int) tix[j] - 1) * blen[j];
 					blockDims[j] = (tix[j] * blen[j] < src.getDim(j)) ? blen[j] : src.getDim(j) - offsets[j];

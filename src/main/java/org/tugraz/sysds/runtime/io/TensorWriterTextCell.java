@@ -33,7 +33,7 @@ import java.io.OutputStreamWriter;
 
 public class TensorWriterTextCell extends TensorWriter {
 	@Override
-	public void writeTensorToHDFS(TensorBlock src, String fname, int[] dims, int[] blen) throws IOException {
+	public void writeTensorToHDFS(TensorBlock src, String fname, long[] dims, int[] blen) throws IOException {
 		//validity check matrix dimensions
 		if (src.getNumDims() != dims.length)
 			throw new IOException("Tensor number of dimensions mismatch with metadata: " + src.getNumDims() + " vs " + dims.length);
@@ -57,7 +57,7 @@ public class TensorWriterTextCell extends TensorWriter {
 	}
 
 	protected static void writeTextCellTensorToHDFS(Path path, JobConf job, FileSystem fs, TensorBlock src,
-			int[] dims) throws IOException {
+			long[] dims) throws IOException {
 		try (BufferedWriter br = new BufferedWriter(new OutputStreamWriter(fs.create(path, true)))) {
 			//for obj reuse and preventing repeated buffer re-allocations
 			StringBuilder sb = new StringBuilder();
@@ -79,7 +79,7 @@ public class TensorWriterTextCell extends TensorWriter {
 			int[] ix = new int[dims.length];
 			for (long i = 0; i < src.getLength(); i++) {
 				Object obj = src.get(ix);
-				boolean skip = false;
+				boolean skip;
 				if (isBasicTensor)
 					skip = UtilFunctions.objectToDouble(((BasicTensor) src).getValueType(), obj) == 0.0;
 				else

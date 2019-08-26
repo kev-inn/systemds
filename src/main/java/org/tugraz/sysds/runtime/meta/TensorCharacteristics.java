@@ -26,6 +26,7 @@ public class TensorCharacteristics extends DataCharacteristics
 {
 	private static final long serialVersionUID = 8300479822915546000L;
 
+	// TODO move block size to `ConfigurationManager`
 	public static final int[] DEFAULT_BLOCK_SIZE = {1024, 128, 32, 16, 8, 8};
 	private long[] _dims;
 	private int[] _blkSizes;
@@ -66,12 +67,8 @@ public class TensorCharacteristics extends DataCharacteristics
 
 	@Override
 	public DataCharacteristics set(DataCharacteristics that) {
-		long[] dims = new long[that.getNumDims()];
-		int[] blockSizes = new int[that.getNumDims()];
-		for (int i = 0; i < dims.length; i++) {
-			dims[i] = that.getDim(i);
-			blockSizes[i] = (int)that.getBlockSize(i);
-		}
+		long[] dims = that.getDims();
+		int[] blockSizes = that.getBlockSizes();
 		set(dims, blockSizes, that.getNonZeros());
 		return this;
 	}
@@ -111,6 +108,11 @@ public class TensorCharacteristics extends DataCharacteristics
 	}
 
 	@Override
+	public long[] getDims() {
+		return _dims;
+	}
+
+	@Override
 	public TensorCharacteristics setDim(int i, long dim) {
 		_dims[i] = dim;
 		return this;
@@ -125,6 +127,11 @@ public class TensorCharacteristics extends DataCharacteristics
 	@Override
 	public long getBlockSize(int i) {
 		return _blkSizes[i];
+	}
+
+	@Override
+	public int[] getBlockSizes() {
+		return _blkSizes;
 	}
 
 	@Override

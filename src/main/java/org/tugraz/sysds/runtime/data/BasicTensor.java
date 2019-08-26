@@ -668,6 +668,7 @@ public class BasicTensor extends TensorBlock implements Externalizable
 			outBlock.set(destIx, get(srcIx));
 			int i = outBlock.getNumDims() - 1;
 			destIx[i]++;
+			srcIx[i]++;
 			//calculating next index
 			while (destIx[i] == outBlock.getDim(i)) {
 				destIx[i] = 0;

@@ -44,6 +44,10 @@ import org.tugraz.sysds.runtime.io.MatrixReaderFactory;
 import org.tugraz.sysds.runtime.io.MatrixWriter;
 import org.tugraz.sysds.runtime.io.MatrixWriterFactory;
 import org.tugraz.sysds.runtime.io.ReadProperties;
+import org.tugraz.sysds.runtime.io.TensorReader;
+import org.tugraz.sysds.runtime.io.TensorReaderFactory;
+import org.tugraz.sysds.runtime.io.TensorWriter;
+import org.tugraz.sysds.runtime.io.TensorWriterFactory;
 import org.tugraz.sysds.runtime.matrix.data.CTableMap;
 import org.tugraz.sysds.runtime.matrix.data.FrameBlock;
 import org.tugraz.sysds.runtime.matrix.data.IJV;
@@ -96,7 +100,15 @@ public class DataConverter
 		writer.writeMatrixToHDFS(mat, dir, dc.getRows(), dc.getCols(), dc.getRowsPerBlock(), dc.getColsPerBlock(), dc.getNonZeros(), diag);
 	}
 
-	public static MatrixBlock readMatrixFromHDFS(String dir, InputInfo inputinfo, long rlen, long clen, int brlen, int bclen, boolean localFS) 
+	public static void writeTensorToHDFS(TensorBlock tensor, String dir, OutputInfo outputinfo, DataCharacteristics dc)
+			throws IOException {
+		TensorWriter writer = TensorWriterFactory.createTensorWriter(outputinfo);
+		long[] dims = dc.getDims();
+		int[] blks = dc.getBlockSizes();
+		writer.writeTensorToHDFS(tensor, dir, dims, blks);
+	}
+
+	public static MatrixBlock readMatrixFromHDFS(String dir, InputInfo inputinfo, long rlen, long clen, int brlen, int bclen, boolean localFS)
 		throws IOException
 	{	
 		ReadProperties prop = new ReadProperties();
@@ -177,6 +189,19 @@ public class DataConverter
 		prop.formatProperties = formatProperties;
 		
 		return readMatrixFromHDFS(prop);
+	}
+
+	public static TensorBlock readTensorFromHDFS(String dir, InputInfo inputinfo, long[] dims, int[] blen) throws IOException {
+		TensorBlock ret;
+		try {
+			TensorReader reader = TensorReaderFactory.createTensorReader(inputinfo);
+			ret = reader.readTensorFromHDFS(dir, dims, blen);
+		}
+		catch(DMLRuntimeException rex)
+		{
+			throw new IOException(rex);
+		}
+		return ret;
 	}
 	
 	/**

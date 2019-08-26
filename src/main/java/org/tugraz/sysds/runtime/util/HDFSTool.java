@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 
 
@@ -412,15 +413,26 @@ public class HDFSTool
 		
 		//handle output dimensions
 		if( !dt.isScalar() ) {
-			mtd.put(DataExpression.READROWPARAM, dc.getRows());
-			mtd.put(DataExpression.READCOLPARAM, dc.getCols());
-			// handle output nnz and binary block configuration
-			if( dt.isMatrix() ) {
-				if (outinfo == OutputInfo.BinaryBlockOutputInfo ) {
-					mtd.put(DataExpression.ROWBLOCKCOUNTPARAM, dc.getRowsPerBlock());
-					mtd.put(DataExpression.COLUMNBLOCKCOUNTPARAM, dc.getColsPerBlock());
+			if (dt.isTensor()) {
+				// we use `Long` instead of `long` so `mtd.put()` doesn't recognize the array as an object and fails
+				Object[] dims = Arrays.stream(dc.getDims()).boxed().toArray();
+				mtd.put(DataExpression.READDIMSPARAM, dims);
+				if (outinfo == OutputInfo.BinaryBlockOutputInfo) {
+					Object[] blks = Arrays.stream(dc.getBlockSizes()).boxed().toArray();
+					mtd.put(DataExpression.DIMSBLOCKCOUNTPARAM, blks);
 				}
-				mtd.put(DataExpression.READNNZPARAM, dc.getNonZeros());
+			}
+			else {
+				mtd.put(DataExpression.READROWPARAM, dc.getRows());
+				mtd.put(DataExpression.READCOLPARAM, dc.getCols());
+				// handle output nnz and binary block configuration
+				if (dt.isMatrix()) {
+					if (outinfo == OutputInfo.BinaryBlockOutputInfo) {
+						mtd.put(DataExpression.ROWBLOCKCOUNTPARAM, dc.getRowsPerBlock());
+						mtd.put(DataExpression.COLUMNBLOCKCOUNTPARAM, dc.getColsPerBlock());
+					}
+					mtd.put(DataExpression.READNNZPARAM, dc.getNonZeros());
+				}
 			}
 		}
 			
@@ -447,7 +459,7 @@ public class HDFSTool
 
 		return mtd.toString(4); // indent with 4 spaces	
 	}
-	
+
 	public static double[][] readMatrixFromHDFS(String dir, InputInfo inputinfo, long rlen, long clen, int brlen, int bclen) 
 		throws IOException, DMLRuntimeException
 	{

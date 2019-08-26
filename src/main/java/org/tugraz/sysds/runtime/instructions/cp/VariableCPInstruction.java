@@ -21,7 +21,6 @@
 
 package org.tugraz.sysds.runtime.instructions.cp;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.LocalFileSystem;
@@ -333,7 +332,18 @@ public class VariableCPInstruction extends CPInstruction implements LineageTrace
 		case CreateVariable:
 			// variable name
 			DataType dt = DataType.valueOf(parts[4]);
-			ValueType vt = dt==DataType.MATRIX ? ValueType.FP64 : ValueType.STRING;
+			ValueType vt;
+			if (dt == DataType.MATRIX)
+				vt = ValueType.FP64;
+			else {
+				if (dt == DataType.TENSOR) {
+					//TODO choose correct value type
+					vt = ValueType.STRING;
+				}
+				else {
+					vt = ValueType.STRING;
+				}
+			}
 			int extSchema = (dt==DataType.FRAME && parts.length>=13) ? 1 : 0;
 			in1 = new CPOperand(parts[1], vt, dt);
 			// file name
@@ -909,7 +919,9 @@ public class VariableCPInstruction extends CPInstruction implements LineageTrace
 		}
 		else if( getInput1().getDataType() == DataType.TENSOR ) {
 			// TODO write tensor
-			throw new NotImplementedException();
+			String outFmt = getInput3().getName();
+			TensorObject to = ec.getTensorObject(getInput1().getName());
+			to.exportData(fname, outFmt, _formatProperties);
 		}
 	}
 	

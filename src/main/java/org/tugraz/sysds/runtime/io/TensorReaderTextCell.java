@@ -36,11 +36,12 @@ import org.tugraz.sysds.runtime.data.TensorBlock;
 import org.tugraz.sysds.runtime.util.FastStringTokenizer;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 public class TensorReaderTextCell extends TensorReader {
 
 	@Override
-	public TensorBlock readTensorFromHDFS(String fname, int[] dims,
+	public TensorBlock readTensorFromHDFS(String fname, long[] dims,
 			int[] blen) throws IOException, DMLRuntimeException {
 		//prepare file access
 		JobConf job = new JobConf(ConfigurationManager.getCachedJobConf());
@@ -54,7 +55,7 @@ public class TensorReaderTextCell extends TensorReader {
 		return readTextCellTensorFromHDFS(path, job, dims);
 	}
 
-	protected TensorBlock readTextCellTensorFromHDFS(Path path, JobConf job, int[] dims) throws IOException {
+	protected TensorBlock readTextCellTensorFromHDFS(Path path, JobConf job, long[] dims) throws IOException {
 		FileInputFormat.addInputPath(job, path);
 		TextInputFormat informat = new TextInputFormat();
 		informat.configure(job);
@@ -63,6 +64,7 @@ public class TensorReaderTextCell extends TensorReader {
 		LongWritable key = new LongWritable();
 		Text value = new Text();
 		TensorBlock ret = null;
+		int[] idims = Arrays.stream(dims).mapToInt(i -> (int) i).toArray();
 
 		try {
 			FastStringTokenizer st = new FastStringTokenizer(' ');
@@ -75,14 +77,19 @@ public class TensorReaderTextCell extends TensorReader {
 					String tensorId = st.nextToken();
 					if (tensorId.equals(TensorWriter.BASIC_TENSOR_IDENTIFIER)) {
 						Types.ValueType vt = Types.ValueType.valueOf(st.nextToken());
-						ret = new BasicTensor(vt, dims, false);
+						ret = new BasicTensor(vt, idims, false);
+						ret.allocateBlock();
 					}
 					else if (tensorId.equals(TensorWriter.DATA_TENSOR_IDENTIFIER)) {
-						int cols = dims[1];
+						int cols = idims[1];
 						Types.ValueType[] schema = new Types.ValueType[cols];
 						for (int i = 0; i < cols; i++)
 							schema[i] = Types.ValueType.valueOf(st.nextToken());
-						ret = new DataTensor(schema, dims);
+						ret = new DataTensor(schema, idims);
+						ret.allocateBlock();
+					}
+					else {
+						throw new IOException("Tensor identifier `" + tensorId + "` non recognized internal `TensorBlock` class.");
 					}
 
 					int[] ix = new int[dims.length];
@@ -93,7 +100,8 @@ public class TensorReaderTextCell extends TensorReader {
 						}
 						ret.set(ix, st.nextToken());
 					}
-				} finally {
+				}
+				finally {
 					IOUtilFunctions.closeSilently(reader);
 				}
 			}
