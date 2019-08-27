@@ -27,6 +27,7 @@ import org.tugraz.sysds.runtime.controlprogram.caching.CacheDataInput;
 import org.tugraz.sysds.runtime.controlprogram.caching.CacheDataOutput;
 import org.tugraz.sysds.runtime.data.DataTensor;
 import org.tugraz.sysds.runtime.data.BasicTensor;
+import org.tugraz.sysds.runtime.data.TensorBlock;
 import org.tugraz.sysds.runtime.matrix.data.MatrixBlock;
 import org.tugraz.sysds.runtime.util.DataConverter;
 import org.tugraz.sysds.test.TestUtils;
@@ -36,72 +37,126 @@ public class TensorSerializationTest
 {
 	@Test
 	public void testSerializeBasicTensorFP32() {
-		BasicTensor tb1 = createBasicTensor(ValueType.FP32, 70, 30, 0.7);
-		BasicTensor tb2 = serializeAndDeserializeBasicTensor(tb1);
-		compareBasicTensors(tb1, tb2);
+		testSerializeBasicTensor(ValueType.FP32);
 	}
 	
 	@Test
 	public void testSerializeBasicTensorFP64() {
-		BasicTensor tb1 = createBasicTensor(ValueType.FP64, 70, 30, 0.7);
-		BasicTensor tb2 = serializeAndDeserializeBasicTensor(tb1);
-		compareBasicTensors(tb1, tb2);
+		testSerializeBasicTensor(ValueType.FP64);
 	}
 	
 	@Test
 	public void testSerializeBasicTensorINT32() {
-		BasicTensor tb1 = createBasicTensor(ValueType.INT32, 70, 30, 0.7);
-		BasicTensor tb2 = serializeAndDeserializeBasicTensor(tb1);
-		compareBasicTensors(tb1, tb2);
+		testSerializeBasicTensor(ValueType.INT32);
 	}
 	
 	@Test
 	public void testSerializeBasicTensorINT64() {
-		BasicTensor tb1 = createBasicTensor(ValueType.INT64, 70, 30, 0.7);
-		BasicTensor tb2 = serializeAndDeserializeBasicTensor(tb1);
-		compareBasicTensors(tb1, tb2);
+		testSerializeBasicTensor(ValueType.INT64);
 	}
 	
 	@Test
 	public void testSerializeBasicTensorBoolean() {
-		BasicTensor tb1 = createBasicTensor(ValueType.BOOLEAN, 70, 30, 0.7);
+		testSerializeBasicTensor(ValueType.BOOLEAN);
+	}
+
+	private void testSerializeBasicTensor(ValueType vt) {
+		BasicTensor tb1 = createBasicTensor(vt, 70, 30, 0.7);
 		BasicTensor tb2 = serializeAndDeserializeBasicTensor(tb1);
 		compareBasicTensors(tb1, tb2);
 	}
 
 	@Test
 	public void testSerializeDataTensorFP32() {
-		DataTensor tb1 = createDataTensor(ValueType.FP32, 70, 30, 0.7);
-		DataTensor tb2 = serializeAndDeserializeDataTensor(tb1);
-		compareDataTensors(tb1, tb2);
+		testSerializeDataTensor(ValueType.FP32);
 	}
 
 	@Test
 	public void testSerializeDataTensorFP64() {
-		DataTensor tb1 = createDataTensor(ValueType.FP64, 70, 30, 0.7);
-		DataTensor tb2 = serializeAndDeserializeDataTensor(tb1);
-		compareDataTensors(tb1, tb2);
+		testSerializeDataTensor(ValueType.FP64);
 	}
 
 	@Test
 	public void testSerializeDataTensorINT32() {
-		DataTensor tb1 = createDataTensor(ValueType.INT32, 70, 30, 0.7);
-		DataTensor tb2 = serializeAndDeserializeDataTensor(tb1);
-		compareDataTensors(tb1, tb2);
+		testSerializeDataTensor(ValueType.INT32);
 	}
 
 	@Test
 	public void testSerializeDataTensorINT64() {
-		DataTensor tb1 = createDataTensor(ValueType.INT64, 70, 30, 0.7);
+		testSerializeDataTensor(ValueType.INT64);
+	}
+
+	@Test
+	public void testSerializeDataTensorBoolean() {
+		testSerializeDataTensor(ValueType.BOOLEAN);
+	}
+
+	private void testSerializeDataTensor(ValueType vt) {
+		DataTensor tb1 = createDataTensor(vt, 70, 30, 0.7);
 		DataTensor tb2 = serializeAndDeserializeDataTensor(tb1);
 		compareDataTensors(tb1, tb2);
 	}
 
 	@Test
-	public void testSerializeDataTensorBoolean() {
-		DataTensor tb1 = createDataTensor(ValueType.BOOLEAN, 70, 30, 0.7);
-		DataTensor tb2 = serializeAndDeserializeDataTensor(tb1);
-		compareDataTensors(tb1, tb2);
+	public void testSerializeDataToBasicTensorFP32() {
+		testSerializeDataToBasicTensor(ValueType.FP32);
+	}
+
+	@Test
+	public void testSerializeDataToBasicTensorFP64() {
+		testSerializeDataToBasicTensor(ValueType.FP64);
+	}
+
+	@Test
+	public void testSerializeDataToBasicTensorINT32() {
+		testSerializeDataToBasicTensor(ValueType.INT32);
+	}
+
+	@Test
+	public void testSerializeDataToBasicTensorINT64() {
+		testSerializeDataToBasicTensor(ValueType.INT64);
+	}
+
+	@Test
+	public void testSerializeDataToBasicTensorBoolean() {
+		testSerializeDataToBasicTensor(ValueType.BOOLEAN);
+	}
+
+	private void testSerializeDataToBasicTensor(ValueType vt) {
+		BasicTensor tb1 = createBasicTensor(vt, 70, 30, 0.7);
+		DataTensor tb2 = serializeBasicTensorDeserializeDataTensor(tb1);
+		compareTensorBlocks(tb1, tb2);
+	}
+
+	@Test
+	public void testSerializeBasicToDataTensorFP32() {
+		testSerializeBasicToDataTensor(ValueType.FP32);
+	}
+
+	@Test
+	public void testSerializeBasicToDataTensorFP64() {
+		testSerializeBasicToDataTensor(ValueType.FP64);
+	}
+
+	@Test
+	public void testSerializeBasicToDataTensorINT32() {
+		testSerializeBasicToDataTensor(ValueType.INT32);
+	}
+
+	@Test
+	public void testSerializeBasicToDataTensorINT64() {
+		testSerializeBasicToDataTensor(ValueType.INT64);
+	}
+
+	@Test
+	public void testSerializeBasicToDataTensorBoolean() {
+		testSerializeBasicToDataTensor(ValueType.BOOLEAN);
+	}
+
+	public void testSerializeBasicToDataTensor(ValueType vt) {
+		DataTensor tb1 = createDataTensor(vt, 70, 30, 0.7);
+		BasicTensor tb2 = serializeDataTensorDeserializeBasicTensor(tb1);
+		compareTensorBlocks(tb1, tb2);
 	}
 
 	private BasicTensor serializeAndDeserializeBasicTensor(BasicTensor tb1) {
@@ -136,6 +191,38 @@ public class TensorSerializationTest
 		}
 	}
 
+	private DataTensor serializeBasicTensorDeserializeDataTensor(BasicTensor tb1) {
+		try {
+			//serialize and deserialize tensor block
+			byte[] bdata = new byte[(int)tb1.getExactSerializedSize()];
+			DataOutput dout = new CacheDataOutput(bdata);
+			tb1.write(dout); //tb1 serialized into bdata
+			DataInput din = new CacheDataInput(bdata);
+			DataTensor tb2 = new DataTensor();
+			tb2.readFields(din); //bdata deserialized into tb2
+			return tb2;
+		}
+		catch(Exception ex) {
+			throw new DMLRuntimeException(ex);
+		}
+	}
+
+	private BasicTensor serializeDataTensorDeserializeBasicTensor(DataTensor tb1) {
+		try {
+			//serialize and deserialize tensor block
+			byte[] bdata = new byte[(int)tb1.getExactSerializedSize()];
+			DataOutput dout = new CacheDataOutput(bdata);
+			tb1.write(dout); //tb1 serialized into bdata
+			DataInput din = new CacheDataInput(bdata);
+			BasicTensor tb2 = new BasicTensor();
+			tb2.readFields(din); //bdata deserialized into tb2
+			return tb2;
+		}
+		catch(Exception ex) {
+			throw new DMLRuntimeException(ex);
+		}
+	}
+
 	private BasicTensor createBasicTensor(ValueType vt, int rows, int cols, double sparsity) {
 		return (BasicTensor) DataConverter.convertToTensorBlock(TestUtils.round(
 				MatrixBlock.randOperations(rows, cols, sparsity, 0, 1, "uniform", 7)), vt, true);
@@ -158,6 +245,15 @@ public class TensorSerializationTest
 
 	private void compareDataTensors(DataTensor tb1, DataTensor tb2) {
 		Assert.assertArrayEquals(tb1.getSchema(), tb2.getSchema());
+		Assert.assertEquals(tb1.getNumRows(), tb2.getNumRows());
+		Assert.assertEquals(tb1.getNumColumns(), tb2.getNumColumns());
+		for(int i=0; i<tb1.getNumRows(); i++)
+			for(int j=0; j<tb1.getNumColumns(); j++)
+				Assert.assertEquals(Double.valueOf(tb1.get(i, j)),
+						Double.valueOf(tb2.get(i, j)));
+	}
+
+	private void compareTensorBlocks(TensorBlock tb1, TensorBlock tb2) {
 		Assert.assertEquals(tb1.getNumRows(), tb2.getNumRows());
 		Assert.assertEquals(tb1.getNumColumns(), tb2.getNumColumns());
 		for(int i=0; i<tb1.getNumRows(); i++)

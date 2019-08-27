@@ -17,11 +17,14 @@
 
 package org.tugraz.sysds.runtime.data;
 
+import org.tugraz.sysds.common.Types.ValueType;
 import org.tugraz.sysds.runtime.controlprogram.caching.CacheBlock;
 import org.tugraz.sysds.runtime.util.UtilFunctions;
 
 public abstract class TensorBlock implements CacheBlock
 {
+	protected static final int VALID_VALUE_TYPES_LENGTH = ValueType.values().length - 1;
+
 	public static final int[] DEFAULT_DIMS = new int[]{0, 0};
 
 	//min 2 dimensions to preserve proper matrix semantics

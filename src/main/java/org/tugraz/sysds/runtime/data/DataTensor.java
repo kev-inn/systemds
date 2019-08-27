@@ -27,11 +27,15 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class DataTensor extends TensorBlock {
-	private static final int VALID_VALUE_TYPES_LENGTH = ValueType.values().length - 1;
-
 	private BasicTensor[] _colsdata = new BasicTensor[VALID_VALUE_TYPES_LENGTH];
 	private ValueType[] _schema = null;
+	/**
+	 * Contains the (column) index in `_colsdata` for a certain column of the `DataTensor`. Which `_colsdata` to use is specified by the `_schema`
+	 */
 	private int[] _colsToIx = null;
+	/**
+	 * Contains the column of `DataTensor` an `_colsdata` (column) index corresponds to.
+	 */
 	private int[][] _ixToCols = null;
 
 	public DataTensor() {
@@ -119,9 +123,9 @@ public class DataTensor extends TensorBlock {
 	public DataTensor(double val) {
 		_dims = new int[]{1, 1};
 		_schema = new ValueType[]{ValueType.FP64};
-		_colsToIx = new int[] {0};
+		_colsToIx = new int[]{0};
 		_ixToCols = new int[VALID_VALUE_TYPES_LENGTH][];
-		_ixToCols[ValueType.FP64.ordinal()] = new int[] {0};
+		_ixToCols[ValueType.FP64.ordinal()] = new int[]{0};
 		_colsdata = new BasicTensor[VALID_VALUE_TYPES_LENGTH];
 		_colsdata[ValueType.FP64.ordinal()] = new BasicTensor(val);
 	}
@@ -182,7 +186,8 @@ public class DataTensor extends TensorBlock {
 		// typeIxCounter now has the length of the BasicTensors
 		if (_colsdata == null) {
 			allocateBlock();
-		} else {
+		}
+		else {
 			for (int i = 0; i < _colsdata.length; i++) {
 				if (_colsdata[i] != null) {
 					_colsdata[i].reset(toInternalDims(dims, typeIxCounter[i]));
@@ -292,6 +297,9 @@ public class DataTensor extends TensorBlock {
 		_dims = that._dims.clone();
 		_schema = that._schema.clone();
 		_colsToIx = that._colsToIx.clone();
+		_ixToCols = new int[that._ixToCols.length][];
+		for (int i = 0; i < _ixToCols.length; i++)
+			_ixToCols[i] = that._ixToCols[i].clone();
 		if (that.isAllocated()) {
 			if (that.isEmpty(false)) {
 				return;
@@ -301,6 +309,34 @@ public class DataTensor extends TensorBlock {
 					_colsdata[i] = new BasicTensor(that._colsdata[i]);
 				}
 			}
+		}
+	}
+
+	public void copy(int[] lower, int[] upper, DataTensor src) {
+		int[] subLower = lower.clone();
+		int[] subUpper = upper.clone();
+
+		if (upper[1] == 0) {
+			upper[1] = getDim(1);
+			upper[0]--;
+		}
+		for (int i = 0; i < VALID_VALUE_TYPES_LENGTH; i++) {
+			if (src._colsdata[i] == null)
+				continue;
+			// TODO binary search
+			for (int j = 0; j < _ixToCols[i].length; j++) {
+				if (_ixToCols[i][j] >= lower[1]) {
+					subLower[1] = _ixToCols[i][j];
+					break;
+				}
+			}
+			for (int j = _ixToCols[i].length; j >= 0; j--) {
+				if (_ixToCols[i][j] < upper[1]) {
+					subUpper[1] = _ixToCols[i][j] + 1;
+					break;
+				}
+			}
+			_colsdata[i].copy(subLower, subUpper, src._colsdata[i]);
 		}
 	}
 
@@ -318,7 +354,7 @@ public class DataTensor extends TensorBlock {
 		for (BasicTensor bt : _colsdata) {
 			size += 1; // flag
 			if (bt != null)
-				size += bt.getExactSerializedSize();
+				size += bt.getExactBlockDataSerializedSize();
 		}
 		return size;
 	}
@@ -368,13 +404,16 @@ public class DataTensor extends TensorBlock {
 			out.writeInt(_colsToIx[i]);
 		}
 		//step 3: write basic tensors
-		for (BasicTensor colsdatum : _colsdata) {
+		for (int i = 0; i < _colsdata.length; i++) {
 			//present flag
-			if (colsdatum == null)
+			if (_colsdata[i] == null)
 				out.writeBoolean(false);
 			else {
 				out.writeBoolean(true);
-				colsdatum.write(out);
+				for (int j = 0; j < _ixToCols[i].length; j++) {
+					out.writeInt(_ixToCols[i][j]);
+				}
+				_colsdata[i].writeBlockData(out);
 			}
 		}
 	}
@@ -387,15 +426,21 @@ public class DataTensor extends TensorBlock {
 			_dims[i] = in.readInt();
 		_schema = new ValueType[getDim(1)];
 		_colsToIx = new int[getDim(1)];
+		int[] colsdataLengths = new int[VALID_VALUE_TYPES_LENGTH];
 		for (int i = 0; i < getDim(1); i++) {
 			_schema[i] = ValueType.values()[in.readByte()];
 			_colsToIx[i] = in.readInt();
+			colsdataLengths[_schema[i].ordinal()]++;
 		}
 		_colsdata = new BasicTensor[VALID_VALUE_TYPES_LENGTH];
+		_ixToCols = new int[VALID_VALUE_TYPES_LENGTH][];
 		for (int i = 0; i < _colsdata.length; i++) {
 			if (in.readBoolean()) {
-				_colsdata[i] = new BasicTensor();
-				_colsdata[i].readFields(in);
+				_ixToCols[i] = new int[colsdataLengths[i]];
+				for (int j = 0; j < colsdataLengths[i]; j++)
+					_ixToCols[i][j] = in.readInt();
+				_colsdata[i] = new BasicTensor(ValueType.values()[i], toInternalDims(_dims, colsdataLengths[i]));
+				_colsdata[i].readBlockData(in);
 			}
 		}
 	}
