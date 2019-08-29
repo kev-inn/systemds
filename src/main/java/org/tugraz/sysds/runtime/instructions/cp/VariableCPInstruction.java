@@ -40,8 +40,6 @@ import org.tugraz.sysds.runtime.controlprogram.caching.MatrixObject.UpdateType;
 import org.tugraz.sysds.runtime.controlprogram.caching.TensorObject;
 import org.tugraz.sysds.runtime.controlprogram.context.ExecutionContext;
 import org.tugraz.sysds.runtime.controlprogram.parfor.util.IDSequence;
-import org.tugraz.sysds.runtime.data.BasicTensor;
-import org.tugraz.sysds.runtime.data.DataTensor;
 import org.tugraz.sysds.runtime.data.TensorBlock;
 import org.tugraz.sysds.runtime.instructions.Instruction;
 import org.tugraz.sysds.runtime.instructions.InstructionUtils;
@@ -653,8 +651,7 @@ public class VariableCPInstruction extends CPInstruction implements LineageTrace
 				TensorBlock tBlock = ec.getTensorInput(getInput1().getName());
 				if (tBlock.getNumDims() != 2 || tBlock.getNumRows() != 1 || tBlock.getNumColumns() != 1)
 					throw new DMLRuntimeException("Dimension mismatch - unable to cast tensor '" + getInput1().getName() + "' to scalar.");
-				ValueType vt = tBlock instanceof BasicTensor ?
-					((BasicTensor) tBlock).getValueType() : ((DataTensor) tBlock).getColValueType(0);
+				ValueType vt = tBlock.isHeterogeneous() ? tBlock.getSchema()[0] : tBlock.getValueType();
 				ec.setScalarOutput(output.getName(), ScalarObjectFactory
 					.createScalarObject(vt, tBlock.get(new int[] {0, 0})));
 				ec.releaseTensorInput(getInput1().getName());

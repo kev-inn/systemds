@@ -19,6 +19,7 @@ package org.tugraz.sysds.runtime.io;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.tugraz.sysds.common.Types.ValueType;
 import org.tugraz.sysds.runtime.DMLRuntimeException;
 import org.tugraz.sysds.runtime.data.TensorBlock;
 import org.tugraz.sysds.runtime.util.HDFSTool;
@@ -27,7 +28,7 @@ import java.io.EOFException;
 import java.io.IOException;
 
 public abstract class TensorReader {
-	public abstract TensorBlock readTensorFromHDFS(String fname, long[] dims, int[] blen)
+	public abstract TensorBlock readTensorFromHDFS(String fname, long[] dims, int[] blen, ValueType[] schema)
 			throws IOException, DMLRuntimeException;
 
 	protected static void checkValidInputFile(FileSystem fs, Path path)

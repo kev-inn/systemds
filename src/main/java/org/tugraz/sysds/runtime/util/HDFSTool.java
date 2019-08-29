@@ -460,7 +460,39 @@ public class HDFSTool
 		return mtd.toString(4); // indent with 4 spaces	
 	}
 
-	public static double[][] readMatrixFromHDFS(String dir, InputInfo inputinfo, long rlen, long clen, int brlen, int bclen) 
+	public static void readMetaDataFile(String mtdfile, ValueType vt, ValueType[] schema, DataType dt, DataCharacteristics dc,
+			OutputInfo outinfo, FileFormatProperties formatProperties) throws IOException {
+		Path path = new Path(mtdfile);
+		FileSystem fs = IOUtilFunctions.getFileSystem(path);
+		try (BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(path)))) {
+			OrderedJSONObject mtd = new OrderedJSONObject(br);
+			mtd.forEach((k,v) -> {
+				switch((String) k) {
+					case DataExpression.DATATYPEPARAM:
+						break;
+					case DataExpression.VALUETYPEPARAM:
+						break;
+					case DataExpression.SCHEMAPARAM:
+						break;
+					case DataExpression.READDIMSPARAM:
+						break;
+					case DataExpression.DIMSBLOCKCOUNTPARAM:
+						break;
+					case DataExpression.READROWPARAM:
+						break;
+					case DataExpression.READCOLPARAM:
+						break;
+					default:
+						break;
+				}
+			});
+		}
+		catch (Exception e) {
+			throw new IOException("Error creating and writing metadata JSON file", e);
+		}
+	}
+
+	public static double[][] readMatrixFromHDFS(String dir, InputInfo inputinfo, long rlen, long clen, int brlen, int bclen)
 		throws IOException, DMLRuntimeException
 	{
 		MatrixReader reader = MatrixReaderFactory.createMatrixReader(inputinfo);

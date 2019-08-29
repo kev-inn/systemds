@@ -17,10 +17,8 @@
 package org.tugraz.sysds.runtime.data;
 
 import org.apache.commons.lang.NotImplementedException;
-import org.tugraz.sysds.common.Types.BlockType;
 import org.tugraz.sysds.common.Types.ValueType;
 import org.tugraz.sysds.runtime.DMLRuntimeException;
-import org.tugraz.sysds.runtime.controlprogram.caching.CacheBlock;
 import org.tugraz.sysds.runtime.functionobjects.KahanPlus;
 import org.tugraz.sysds.runtime.functionobjects.Plus;
 import org.tugraz.sysds.runtime.functionobjects.ReduceAll;
@@ -28,81 +26,80 @@ import org.tugraz.sysds.runtime.matrix.data.MatrixBlock;
 import org.tugraz.sysds.runtime.matrix.operators.AggregateOperator;
 import org.tugraz.sysds.runtime.matrix.operators.AggregateUnaryOperator;
 import org.tugraz.sysds.runtime.util.UtilFunctions;
-import scala.Array;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.Serializable;
 
-public class BasicTensor extends TensorBlock implements Externalizable
-{
-	private static final long serialVersionUID = -1887367304030494999L;
+import static org.tugraz.sysds.runtime.data.LibTensorAgg.aggregateBinaryTensor;
+import static org.tugraz.sysds.runtime.data.TensorBlock.DEFAULT_DIMS;
+import static org.tugraz.sysds.runtime.data.TensorBlock.DEFAULT_VTYPE;
+
+public class BasicTensorBlock implements Serializable {
+	private static final long serialVersionUID = -7665685894181661833L;
 
 	public static final double SPARSITY_TURN_POINT = 0.4;
-	public static final ValueType DEFAULT_VTYPE = ValueType.FP64;
 
 	public static final SparseBlock.Type DEFAULT_SPARSEBLOCK = SparseBlock.Type.MCSR;
 
+	protected int[] _dims;
 	//constant value type of tensor block
 	protected ValueType _vt;
 
 	protected boolean _sparse = true;
 	protected long _nnz = 0;
-	
+
 	//matrix data (sparse or dense)
 	protected DenseBlock _denseBlock = null;
 	protected SparseBlock _sparseBlock = null;
-	
-	public BasicTensor() {
+
+	public BasicTensorBlock() {
 		this(DEFAULT_VTYPE, DEFAULT_DIMS.clone(), true, -1);
 	}
-	
-	public BasicTensor(ValueType vt, int[] dims) {
+
+	public BasicTensorBlock(ValueType vt, int[] dims) {
 		this(vt, dims, true, -1);
 	}
-	
-	public BasicTensor(ValueType vt, int[] dims, boolean sp) {
+
+	public BasicTensorBlock(ValueType vt, int[] dims, boolean sp) {
 		this(vt, dims, sp, -1);
 	}
-	
-	public BasicTensor(ValueType vt, int[] dims, boolean sp, long estnnz) {
+
+	public BasicTensorBlock(ValueType vt, int[] dims, boolean sp, long estnnz) {
 		_vt = vt;
 		reset(dims, sp, estnnz, 0);
 	}
-	
-	public BasicTensor(BasicTensor that) {
+
+	public BasicTensorBlock(BasicTensorBlock that) {
 		_vt = that.getValueType();
 		copy(that);
 	}
 
-	public BasicTensor(double val) {
+	public BasicTensorBlock(double val) {
 		_vt = DEFAULT_VTYPE;
 		reset(new int[] {1, 1}, false, 1, val);
 	}
-	
-	public BasicTensor(int[] dims, ValueType vt, double val) {
+
+	public BasicTensorBlock(int[] dims, ValueType vt, double val) {
 		_vt = vt;
 		_dims = dims;
 		reset(dims, false, (val==0) ? 0 : getLength(), val);
 	}
-	
+
+	public long getLength() {
+		return UtilFunctions.prod(_dims);
+	}
+
 	////////
 	// Initialization methods
 	// (reset, init, allocate, etc)
 
-	@Override
 	public void reset() {
 		reset(_dims, _sparse, -1, 0);
 	}
 
-	@Override
 	public void reset(int[] dims) {
 		reset(dims, _sparse, -1, 0);
 	}
-	
+
 	public void reset(int[] dims, long estnnz) {
 		reset(dims, evalSparseFormatInMemory(dims, estnnz), estnnz, 0);
 	}
@@ -110,14 +107,14 @@ public class BasicTensor extends TensorBlock implements Externalizable
 	public void reset(int[] dims, boolean sp) {
 		reset(dims, sp, -1, 0);
 	}
-	
+
 	public void reset(int[] dims, boolean sp, long estnnz) {
 		reset(dims, sp, estnnz, 0);
 	}
-	
+
 	/**
-	 * Internal canonical reset of dense and sparse tensor blocks. 
-	 * 
+	 * Internal canonical reset of dense and sparse tensor blocks.
+	 *
 	 * @param dims    number and size of dimensions
 	 * @param sp      sparse representation
 	 * @param estnnz  estimated number of non-zeros
@@ -130,26 +127,26 @@ public class BasicTensor extends TensorBlock implements Externalizable
 		for( int i=0; i<dims.length; i++ )
 			if( dims[i] < 0 )
 				throw new DMLRuntimeException("Invalid "+i+"th dimensions: "+dims[i]);
-		
+
 		//reset basic meta data
 		_dims = dims;
 		_sparse = sp;
 		_nnz = (val == 0) ? 0 : getLength();
-		
+
 		//reset sparse/dense blocks
 		if( _sparse )
 			resetSparse();
 		else
 			resetDense(val);
 	}
-	
+
 	private void resetSparse() {
 		if(_sparseBlock == null)
 			return;
 		//TODO simplify estimated non-zeros
 		_sparseBlock.reset(-1, getDim(2));
 	}
-	
+
 	private void resetDense(double val) {
 		//handle to dense block allocation and
 		//reset dense block to given value
@@ -166,24 +163,23 @@ public class BasicTensor extends TensorBlock implements Externalizable
 		}
 	}
 
-	@Override
 	public boolean isAllocated() {
 		return _sparse ? (_sparseBlock != null) : (_denseBlock != null);
 	}
 
-	public BasicTensor allocateDenseBlock() {
+	public BasicTensorBlock allocateDenseBlock() {
 		allocateDenseBlock(true);
 		return this;
 	}
 
-	public BasicTensor allocateBlock() {
+	public BasicTensorBlock allocateBlock() {
 		if( _sparse )
 			allocateSparseBlock();
 		else
 			allocateDenseBlock();
 		return this;
 	}
-	
+
 	public boolean allocateDenseBlock(boolean clearNNZ) {
 		//allocate block if non-existing or too small (guaranteed to be 0-initialized),
 		// TODO: use _denseBlock.reset instead, since LDRB need to check dimensions for actually available space
@@ -193,12 +189,12 @@ public class BasicTensor extends TensorBlock implements Externalizable
 			_denseBlock = DenseBlockFactory.createDenseBlock(_vt, _dims);
 		else if( _denseBlock.capacity() < limit )
 			_denseBlock.reset(_dims);
-		
+
 		//clear nnz if necessary
 		if( clearNNZ )
 			_nnz = 0;
 		_sparse = false;
-		
+
 		return reset;
 	}
 
@@ -217,27 +213,45 @@ public class BasicTensor extends TensorBlock implements Externalizable
 		//clear nnz if necessary
 		if( clearNNZ )
 			_nnz = 0;
-		
+
 		return reset;
 	}
-	
+
 	////////
 	// Basic meta data
-	
+
 	public ValueType getValueType() {
 		return _vt;
 	}
 
-	@Override
 	public long getNonZeros() {
 		return _nnz;
+	}
+
+	public int getNumRows() {
+		return getDim(0);
+	}
+
+	public int getNumColumns() {
+		return getDim(1);
+	}
+
+	public int getNumDims() {
+		return _dims.length;
+	}
+
+	public int getDim(int i) {
+		return _dims[i];
+	}
+
+	public int[] getDims() {
+		return _dims;
 	}
 
 	public boolean isSparse() {
 		return _sparse;
 	}
 
-	@Override
 	public boolean isEmpty(boolean safe) {
 		boolean ret = false;
 		if( _sparse && _sparseBlock==null )
@@ -253,166 +267,18 @@ public class BasicTensor extends TensorBlock implements Externalizable
 		}
 		return ret;
 	}
-	
+
 	public DenseBlock getDenseBlock() {
 		return _denseBlock;
 	}
-	
+
 	public SparseBlock getSparseBlock() {
 		return _sparseBlock;
 	}
-	
-	////////
-	// Input/Output functions
-	
-	@Override
-	@SuppressWarnings("incomplete-switch")
-	public void readFields(DataInput in)
-			throws IOException {
-		//step 1: read dims
-		//_vt = ValueType.values()[in.readByte()];
-		_dims = new int[in.readInt()];
-		for (int i = 0; i < _dims.length; i++)
-			_dims[i] = in.readInt();
-		// skip schema and colsToIx
-		for (int i = 0; i < getDim(1) - 1; i++) {
-			in.readByte();
-			in.readInt();
-		}
-		_vt = ValueType.values()[in.readByte()];
-		in.readInt();
 
-		for (int i = 0; i < VALID_VALUE_TYPES_LENGTH; i++) {
-			if (in.readBoolean()) {
-				//skip _ixToCols
-				for (int j = 0; j < getDim(1); j++)
-					in.readInt();
-				readBlockData(in);
-			}
-		}
-	}
-
-	protected void readBlockData(DataInput in) throws IOException {
-		_nnz = in.readLong();
-		switch (BlockType.values()[in.readByte()]) {
-			case EMPTY_BLOCK:
-				reset(_dims);
-				return;
-			case DENSE_BLOCK: {
-				allocateDenseBlock(false);
-				DenseBlock a = getDenseBlock();
-				int odims = (int) UtilFunctions.prod(_dims, 1);
-				int[] ix = new int[getNumDims()];
-				for (int i = 0; i < getNumRows(); i++) {
-					ix[0] = i;
-					for (int j = 0; j < odims; j++) {
-						ix[ix.length - 1] = j;
-						switch (_vt) {
-							case FP32:
-								a.set(i, j, in.readFloat());
-								break;
-							case FP64:
-								a.set(i, j, in.readDouble());
-								break;
-							case INT32:
-								a.set(ix, in.readInt());
-								break;
-							case INT64:
-								a.set(ix, in.readLong());
-								break;
-							case BOOLEAN:
-								a.set(i, j, in.readByte());
-								break;
-							case STRING:
-								a.set(ix, in.readUTF());
-								break;
-						}
-					}
-				}
-				break;
-			}
-			case SPARSE_BLOCK:
-			case ULTRA_SPARSE_BLOCK:
-				throw new NotImplementedException();
-		}
-	}
-	
-	@Override
-	@SuppressWarnings("incomplete-switch")
-	public void write(DataOutput out)
-			throws IOException {
-		// Note that we want `DataTensor` to be able to read a `BasicTensor` which is why we write some redundant data
-		//step 1: write dims
-		out.writeInt(getNumDims()); // num dims
-		for (int i = 0; i < getNumDims(); i++)
-			out.writeInt(getDim(i)); // dim
-		//step 2: write schema (always valueType) and colIndexes (incremental number)
-		for (int i = 0; i < getDim(1); i++) {
-			out.writeByte(_vt.ordinal()); // value type
-			out.writeInt(i);
-		}
-
-		//step 3: write basic tensors (only a single one, but flags for not present)
-		for (int v = 0; v < VALID_VALUE_TYPES_LENGTH; v++) {
-			if (ValueType.values()[v] != _vt)
-				out.writeBoolean(false);
-			else {
-				out.writeBoolean(true);
-				for (int i = 0; i < getDim(1); i++) {
-					out.writeInt(i);
-				}
-				writeBlockData(out);
-			}
-		}
-	}
-
-	protected void writeBlockData(DataOutput out) throws IOException {
-		out.writeLong(getNonZeros()); // nnz
-		if (isEmpty(false)) {
-			//empty blocks do not need to materialize row information
-			out.writeByte(BlockType.EMPTY_BLOCK.ordinal());
-		}
-		else if( !isSparse() ) {
-			out.writeByte(BlockType.DENSE_BLOCK.ordinal());
-			DenseBlock a = getDenseBlock();
-			int odims = (int) UtilFunctions.prod(_dims, 1);
-			int[] ix = new int[getNumDims()];
-			for (int i = 0; i < getNumRows(); i++) {
-				ix[0] = i;
-				for (int j = 0; j < odims; j++) {
-					ix[ix.length - 1] = j;
-					switch (_vt) {
-						case FP32:
-							out.writeFloat((float) a.get(i, j));
-							break;
-						case FP64:
-							out.writeDouble(a.get(i, j));
-							break;
-						case INT32:
-							out.writeInt((int) a.getLong(ix));
-							break;
-						case INT64:
-							out.writeLong(a.getLong(ix));
-							break;
-						case BOOLEAN:
-							out.writeBoolean(a.get(i, j) != 0);
-							break;
-						case STRING:
-							out.writeUTF(a.getString(ix));
-							break;
-					}
-				}
-			}
-		}
-		else {
-			throw new NotImplementedException();
-		}
-	}
-	
 	////////
 	// Basic modification
 
-	@Override
 	public Object get(int[] ix) {
 		if (_sparse) {
 			// TODO: Implement sparse
@@ -438,7 +304,6 @@ public class BasicTensor extends TensorBlock implements Externalizable
 		}
 	}
 
-	@Override
 	public double get(int r, int c) {
 		if (getNumDims() != 2)
 			throw new DMLRuntimeException("BasicTensor.get(int,int) dimension mismatch: expected=2 actual=" + getNumDims());
@@ -452,12 +317,11 @@ public class BasicTensor extends TensorBlock implements Externalizable
 		}
 	}
 
-	@Override
 	public void set(int[] ix, Object v) {
 		if (_sparse) {
 			throw new NotImplementedException();
 		}
-		else {
+		else if (v != null) {
 			if (v instanceof Double)
 				_denseBlock.set(ix, (Double) v);
 			else if (v instanceof Float)
@@ -475,7 +339,6 @@ public class BasicTensor extends TensorBlock implements Externalizable
 		}
 	}
 
-	@Override
 	public void set(int r, int c, double v) {
 		if (getNumDims() != 2)
 			throw new DMLRuntimeException("BasicTensor.set(int,int,double) dimension mismatch: expected=2 actual=" + getNumDims());
@@ -496,16 +359,29 @@ public class BasicTensor extends TensorBlock implements Externalizable
 		}
 	}
 
-	public void set(String str) {
+	public void set(Object v) {
 		if (_sparse) {
 			throw new NotImplementedException();
 		}
 		else {
-			_denseBlock.set(str);
+			if (v instanceof Double)
+				_denseBlock.set((Double) v);
+			else if (v instanceof Float)
+				_denseBlock.set((Float) v);
+			else if (v instanceof Long)
+				_denseBlock.set((Long) v);
+			else if (v instanceof Integer)
+				_denseBlock.set((Integer) v);
+			else if (v instanceof Boolean)
+				_denseBlock.set(((Boolean) v) ? 1.0 : 0.0);
+			else if (v instanceof String)
+				_denseBlock.set((String) v);
+			else
+				throw new DMLRuntimeException("BasicTensor.set(Object) is not implemented for the given Object");
 		}
 	}
 
-	public void set(BasicTensor other) {
+	public void set(BasicTensorBlock other) {
 		if (_sparse) {
 			throw new NotImplementedException();
 		}
@@ -540,7 +416,7 @@ public class BasicTensor extends TensorBlock implements Externalizable
 		}
 	}
 
-	public void copy(BasicTensor that) {
+	public void copy(BasicTensorBlock that) {
 		_dims = that._dims.clone();
 		_sparse = that._sparse;
 		_nnz = that._nnz;
@@ -552,7 +428,7 @@ public class BasicTensor extends TensorBlock implements Externalizable
 		}
 	}
 
-	public BasicTensor copyShallow(BasicTensor that) {
+	public BasicTensorBlock copyShallow(BasicTensorBlock that) {
 		_dims = that._dims.clone();
 		_sparse = that._sparse;
 		_nnz = that._nnz;
@@ -563,7 +439,7 @@ public class BasicTensor extends TensorBlock implements Externalizable
 		return this;
 	}
 
-	private void copyDenseToDense(BasicTensor that) {
+	private void copyDenseToDense(BasicTensorBlock that) {
 		_nnz = that._nnz;
 
 		//plain reset to 0 for empty input
@@ -583,7 +459,7 @@ public class BasicTensor extends TensorBlock implements Externalizable
 	 * @param upper upper index of elements to copy (exclusive)
 	 * @param src source tensor
 	 */
-	public void copy(int[] lower, int[] upper, BasicTensor src) {
+	public void copy(int[] lower, int[] upper, BasicTensorBlock src) {
 		// TODO consider sparse
 		if (src.isEmpty(false)) {
 			return;
@@ -605,8 +481,6 @@ public class BasicTensor extends TensorBlock implements Externalizable
 
 	////////
 	// Size estimation and format decisions
-	
-	
 	private boolean evalSparseFormatInMemory(int[] dims, long estnnz) {
 		// TODO Auto-generated method stub
 		return false;
@@ -621,7 +495,7 @@ public class BasicTensor extends TensorBlock implements Externalizable
 	 * @param result the result tensor
 	 * @return the result tensor
 	 */
-	public BasicTensor aggregateUnaryOperations(AggregateUnaryOperator op, BasicTensor result) {
+	public BasicTensorBlock aggregateUnaryOperations(AggregateUnaryOperator op, BasicTensorBlock result) {
 		// TODO allow to aggregate along a dimension?
 		// TODO performance
 		if (op.aggOp.increOp.fn instanceof KahanPlus) {
@@ -634,7 +508,7 @@ public class BasicTensor extends TensorBlock implements Externalizable
 		}
 		//prepare result matrix block
 		if (result == null || result._vt != _vt)
-			result = new BasicTensor(_vt, new int[]{dim0, dim1}, false);
+			result = new BasicTensorBlock(_vt, new int[]{dim0, dim1}, false);
 		else
 			result.reset(new int[]{dim0, dim1}, false);
 
@@ -648,132 +522,13 @@ public class BasicTensor extends TensorBlock implements Externalizable
 		return result;
 	}
 
-	public void incrementalAggregate(AggregateOperator aggOp, BasicTensor partialResult) {
+	public void incrementalAggregate(AggregateOperator aggOp, BasicTensorBlock partialResult) {
 		if (!aggOp.correctionExists) {
 			if (aggOp.increOp.fn instanceof Plus) {
-				LibTensorAgg.aggregateBinaryTensor(partialResult, this, aggOp);
+				aggregateBinaryTensor(partialResult, this, aggOp);
 			}
 		}
 		else
 			throw new DMLRuntimeException("Correction not supported. correctionLocation: " + aggOp.correctionLocation);
-	}
-
-	@Override
-	public long getInMemorySize() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public long getExactSerializedSize() {
-		//header size (num dims, dims, schema, colIndexes)
-		long size = 4 * (1 + _dims.length) + _dims[1] * (1 + 4) + VALID_VALUE_TYPES_LENGTH;
-		size += getExactBlockDataSerializedSize();
-		return size;
-	}
-
-	protected long getExactBlockDataSerializedSize() {
-		// serialized representation
-		// nnz, type, _ixToCols (DataTensor)
-		long size = 8 + 1 + getDim(1) * 4;
-		if (!isSparse()) {
-			switch (_vt) {
-				case INT32:
-				case FP32:
-					size += 4 * getLength(); break;
-				case INT64:
-				case FP64: 
-					size += 8 * getLength(); break;
-				case BOOLEAN:
-					//TODO perf bits instead of bytes
-					size += getLength(); break;
-					//size += Math.ceil((double)getLength() / 64); break;
-				case STRING:
-				case UNKNOWN:
-					throw new NotImplementedException();
-			}
-		}
-		else {
-			throw new NotImplementedException();
-		}
-		return size;
-	}
-
-	@Override
-	public boolean isShallowSerialize() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean isShallowSerialize(boolean inclConvert) {
-		return !isSparse();
-	}
-
-	@Override
-	public void toShallowSerializeBlock() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void compactEmptyBlock() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public CacheBlock slice(int rl, int ru, int cl, int cu, CacheBlock block) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * Slice the current block and write into the outBlock. The offsets determines where the slice starts,
-	 * the length of the blocks is given by the outBlock dimensions.
-	 * @param offsets offsets where the slice starts
-	 * @param outBlock sliced result block
-	 * @return the sliced result block
-	 */
-	public BasicTensor slice(int[] offsets, BasicTensor outBlock) {
-		// TODO perf
-		int[] srcIx = new int[offsets.length];
-		Array.copy(offsets, 0, srcIx, 0, offsets.length);
-		int[] destIx = new int[offsets.length];
-		for (int l = 0; l < outBlock.getLength(); l++) {
-			outBlock.set(destIx, get(srcIx));
-			int i = outBlock.getNumDims() - 1;
-			destIx[i]++;
-			srcIx[i]++;
-			//calculating next index
-			while (destIx[i] == outBlock.getDim(i)) {
-				destIx[i] = 0;
-				srcIx[i] = offsets[i];
-				i--;
-				if (i < 0) {
-					//we are finished
-					return outBlock;
-				}
-				destIx[i]++;
-				srcIx[i]++;
-			}
-		}
-		return outBlock;
-	}
-
-	@Override
-	public void merge(CacheBlock that, boolean appendOnly) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void writeExternal(ObjectOutput out) throws IOException {
-		write(out);
-	}
-
-	@Override
-	public void readExternal(ObjectInput in) throws IOException {
-		readFields(in);
 	}
 }

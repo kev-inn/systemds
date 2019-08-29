@@ -21,9 +21,9 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.mapred.JobConf;
+import org.tugraz.sysds.common.Types.ValueType;
 import org.tugraz.sysds.conf.ConfigurationManager;
 import org.tugraz.sysds.runtime.DMLRuntimeException;
-import org.tugraz.sysds.runtime.data.BasicTensor;
 import org.tugraz.sysds.runtime.data.TensorBlock;
 import org.tugraz.sysds.runtime.data.TensorIndexes;
 
@@ -33,7 +33,7 @@ import java.util.Arrays;
 public class TensorReaderBinaryBlock extends TensorReader {
 	@Override
 	public TensorBlock readTensorFromHDFS(String fname, long[] dims,
-			int[] blen) throws IOException, DMLRuntimeException {
+			int[] blen, ValueType[] schema) throws IOException, DMLRuntimeException {
 		//prepare file access
 		JobConf job = new JobConf(ConfigurationManager.getCachedJobConf());
 		Path path = new Path(fname);
@@ -43,26 +43,26 @@ public class TensorReaderBinaryBlock extends TensorReader {
 		checkValidInputFile(fs, path);
 
 		//core read
-		return readBinaryBlockTensorFromHDFS(path, job, fs, dims, blen);
+		return readBinaryBlockTensorFromHDFS(path, job, fs, dims, blen, schema);
 	}
 
 	private TensorBlock readBinaryBlockTensorFromHDFS(Path path, JobConf job, FileSystem fs, long[] dims,
-			int[] blen) throws IOException {
-		// TODO DataTensor
-		BasicTensor ret = null;
-		TensorIndexes key = new TensorIndexes();
-		BasicTensor value = new BasicTensor();
+			int[] blen, ValueType[] schema) throws IOException {
 		int[] idims = Arrays.stream(dims).mapToInt(i -> (int) i).toArray();
+		TensorBlock ret;
+		if (schema.length == 1)
+			ret = new TensorBlock(idims, schema[0]).allocateBlock();
+		else
+			ret = new TensorBlock(idims, schema).allocateBlock();
+		TensorIndexes key = new TensorIndexes();
+		// TODO reuse blocks
 
 		for (Path lpath : IOUtilFunctions.getSequenceFilePaths(fs, path)) {
 			SequenceFile.Reader reader = new SequenceFile.Reader(job, SequenceFile.Reader.file(lpath));
+			TensorBlock value = new TensorBlock();
 
 			try {
 				while (reader.next(key, value)) {
-					if (ret == null) {
-						ret = new BasicTensor(value.getValueType(), idims, false);
-						ret.allocateBlock();
-					}
 					if (value.isEmpty(false))
 						continue;
 

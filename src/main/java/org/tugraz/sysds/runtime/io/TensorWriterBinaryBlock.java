@@ -22,7 +22,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.SequenceFile;
 import org.apache.hadoop.mapred.JobConf;
 import org.tugraz.sysds.conf.ConfigurationManager;
-import org.tugraz.sysds.runtime.data.BasicTensor;
 import org.tugraz.sysds.runtime.data.TensorBlock;
 import org.tugraz.sysds.runtime.data.TensorIndexes;
 import org.tugraz.sysds.runtime.matrix.mapred.MRJobConfiguration;
@@ -56,8 +55,7 @@ public class TensorWriterBinaryBlock extends TensorWriter {
 	@SuppressWarnings("deprecation")
 	private void writeBinaryBlockMatrixToHDFS(Path path, JobConf job, FileSystem fs, TensorBlock src, long[] dims,
 			int[] blen) throws IOException {
-		//TODO DataTensor
-		SequenceFile.Writer writer = new SequenceFile.Writer(fs, job, path, TensorIndexes.class, BasicTensor.class);
+		SequenceFile.Writer writer = new SequenceFile.Writer(fs, job, path, TensorIndexes.class, TensorBlock.class);
 
 		try {
 			// bound check
@@ -71,23 +69,27 @@ public class TensorWriterBinaryBlock extends TensorWriter {
 				numBlocks *= Math.max((long) Math.ceil((double) dims[i] / blen[i]), 1);
 			}
 
-			BasicTensor bt = (BasicTensor) src;
 			for (int i = 0; i < numBlocks; i++) {
 				int[] offsets = new int[dims.length];
 				long blockIndex = i;
 				long[] tix = new long[blen.length];
 				int[] blockDims = new int[dims.length];
 				for (int j = blen.length - 1; j >= 0; j--) {
-					tix[j] = 1 + (blockIndex % Math.max((long) Math.ceil((double)src.getDim(j) / blen[j]), 1));
-					blockIndex /= blen[j];
+					long numDimBlocks = Math.max((long) Math.ceil((double)src.getDim(j) / blen[j]), 1);
+					tix[j] = 1 + (blockIndex % numDimBlocks);
+					blockIndex /= numDimBlocks;
 					offsets[j] = ((int) tix[j] - 1) * blen[j];
 					blockDims[j] = (tix[j] * blen[j] < src.getDim(j)) ? blen[j] : src.getDim(j) - offsets[j];
 				}
 				TensorIndexes indx = new TensorIndexes(tix);
-				BasicTensor block = new BasicTensor(bt.getValueType(), blockDims, false);
+				TensorBlock block;
+				if (src.isHeterogeneous())
+					block = new TensorBlock(blockDims, src.getSchema()).allocateBlock();
+				else
+					block = new TensorBlock(blockDims, src.getValueType()).allocateBlock();
 
 				//copy submatrix to block
-				bt.slice(offsets, block);
+				src.slice(offsets, block);
 
 				writer.append(indx, block);
 			}

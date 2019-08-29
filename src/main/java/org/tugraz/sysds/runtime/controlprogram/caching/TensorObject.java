@@ -115,7 +115,6 @@ public class TensorObject extends CacheableData<TensorBlock> {
 		long begin = 0;
 
 		if( LOG.isTraceEnabled() ) {
-			//TODO print dimensions
 			LOG.trace("Reading tensor from HDFS...  " + hashCode() + "  Path: " + fname +
 					", dimensions: " + Arrays.toString(dims));
 			begin = System.currentTimeMillis();
@@ -124,7 +123,7 @@ public class TensorObject extends CacheableData<TensorBlock> {
 		int[] blen = dc.getBlockSizes();
 
 		//read tensor and maintain meta data
-		TensorBlock newData = DataConverter.readTensorFromHDFS(fname, iimd.getInputInfo(), dims, blen);
+		TensorBlock newData = DataConverter.readTensorFromHDFS(fname, iimd.getInputInfo(), dims, blen, getSchema());
 		setHDFSFileExists(true);
 
 		//sanity check correct output
@@ -176,6 +175,11 @@ public class TensorObject extends CacheableData<TensorBlock> {
 		}
 		if( DMLScript.STATISTICS )
 			CacheStatistics.incrementHDFSWrites();
+	}
+
+	@Override
+	protected ValueType[] getSchema() {
+		return _data.getSchema();
 	}
 
 	@Override

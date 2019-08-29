@@ -21,8 +21,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapred.JobConf;
 import org.tugraz.sysds.conf.ConfigurationManager;
-import org.tugraz.sysds.runtime.data.BasicTensor;
-import org.tugraz.sysds.runtime.data.DataTensor;
 import org.tugraz.sysds.runtime.data.TensorBlock;
 import org.tugraz.sysds.runtime.util.HDFSTool;
 import org.tugraz.sysds.runtime.util.UtilFunctions;
@@ -51,39 +49,25 @@ public class TensorWriterTextCell extends TensorWriter {
 		HDFSTool.deleteFileIfExistOnHDFS(fname);
 
 		//core write
-		writeTextCellTensorToHDFS(path, job, fs, src, dims);
+		writeTextCellTensorToHDFS(path, fs, src, dims);
 
 		IOUtilFunctions.deleteCrcFilesFromLocalFileSystem(fs, path);
 	}
 
-	protected static void writeTextCellTensorToHDFS(Path path, JobConf job, FileSystem fs, TensorBlock src,
+	private static void writeTextCellTensorToHDFS(Path path, FileSystem fs, TensorBlock src,
 			long[] dims) throws IOException {
 		try (BufferedWriter br = new BufferedWriter(new OutputStreamWriter(fs.create(path, true)))) {
 			//for obj reuse and preventing repeated buffer re-allocations
 			StringBuilder sb = new StringBuilder();
-			boolean isBasicTensor = false;
-
-			if (src instanceof BasicTensor) {
-				isBasicTensor = true;
-				sb.append(BASIC_TENSOR_IDENTIFIER).append(' ');
-				sb.append(((BasicTensor) src).getValueType().toString()).append('\n');
-			}
-			else {
-				DataTensor dt = (DataTensor) src;
-				sb.append(DATA_TENSOR_IDENTIFIER).append(' ');
-				for (int i = 0; i < src.getNumColumns() - 1; i++)
-					sb.append(dt.getColValueType(i).toString()).append(' ');
-				sb.append(dt.getColValueType(src.getNumColumns() - 1)).append('\n');
-			}
 
 			int[] ix = new int[dims.length];
 			for (long i = 0; i < src.getLength(); i++) {
 				Object obj = src.get(ix);
 				boolean skip;
-				if (isBasicTensor)
-					skip = UtilFunctions.objectToDouble(((BasicTensor) src).getValueType(), obj) == 0.0;
+				if (src.isHeterogeneous())
+					skip = UtilFunctions.objectToDouble(src.getSchema()[ix[1]], obj) == 0.0;
 				else
-					skip = UtilFunctions.objectToDouble(((DataTensor) src).getColValueType(ix[1]), obj) == 0.0;
+					skip = UtilFunctions.objectToDouble(src.getValueType(), obj) == 0.0;
 				if (!skip) {
 					for (int j : ix)
 						sb.append(j + 1).append(' ');

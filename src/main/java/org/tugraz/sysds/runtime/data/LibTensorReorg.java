@@ -39,7 +39,7 @@ public class LibTensorReorg {
 	 * @param dims dimensions
 	 * @return output tensor
 	 */
-	public static BasicTensor reshape(BasicTensor in, BasicTensor out, int[] dims) {
+	public static BasicTensorBlock reshape(BasicTensorBlock in, BasicTensorBlock out, int[] dims) {
 		long length = 1;
 		for (int dim : dims) {
 			length *= dim;
@@ -81,7 +81,7 @@ public class LibTensorReorg {
 		return out;
 	}
 
-	private static void reshapeDense(BasicTensor in, BasicTensor out, int[] dims) {
+	private static void reshapeDense(BasicTensorBlock in, BasicTensorBlock out, int[] dims) {
 		//reshape empty block
 		if( in._denseBlock == null )
 			return;

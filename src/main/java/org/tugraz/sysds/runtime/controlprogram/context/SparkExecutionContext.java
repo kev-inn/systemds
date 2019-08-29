@@ -51,7 +51,6 @@ import org.tugraz.sysds.runtime.controlprogram.caching.FrameObject;
 import org.tugraz.sysds.runtime.controlprogram.caching.MatrixObject;
 import org.tugraz.sysds.runtime.controlprogram.caching.TensorObject;
 import org.tugraz.sysds.runtime.controlprogram.parfor.stat.InfrastructureAnalyzer;
-import org.tugraz.sysds.runtime.data.BasicTensor;
 import org.tugraz.sysds.runtime.data.TensorBlock;
 import org.tugraz.sysds.runtime.data.SparseBlock;
 import org.tugraz.sysds.runtime.data.TensorIndexes;
@@ -909,11 +908,8 @@ public class SparkExecutionContext extends ExecutionContext
 				offset[i] = (int) (blockIx[i] * tc.getBlockSize(i));
 				ix /= tc.getNumBlocks(i);
 			}
-			// TODO: sparse
-			// TODO support DataTensor
-			BasicTensor bt = (BasicTensor) mb;
-			BasicTensor outBlock = new BasicTensor(bt.getValueType(), outDims, false);
-			outBlock = bt.slice(offset, outBlock);
+			TensorBlock outBlock = new TensorBlock(outDims, mb.getValueType());
+			outBlock = mb.slice(offset, outBlock);
 			//create key-value pair
 			for (int i = 0; i < blockIx.length; i++) {
 				blockIx[i]++;
@@ -1127,23 +1123,21 @@ public class SparkExecutionContext extends ExecutionContext
 	}
 
 	public static TensorBlock toTensorBlock(JavaPairRDD<TensorIndexes, TensorBlock> rdd, DataCharacteristics dc) {
-		// TODO support DataTensors
 		long t0 = DMLScript.STATISTICS ? System.nanoTime() : 0;
 
 		// TODO special case single block
 		int[] idims = Arrays.stream(dc.getDims()).mapToInt(i -> (int) i).toArray();
 		// TODO asynchronous allocation
 		List<Tuple2<TensorIndexes, TensorBlock>> list = rdd.collect();
-		ValueType vt = ((BasicTensor) list.get(0)._2).getValueType();
-		BasicTensor out = new BasicTensor(vt, idims);
-		out.allocateDenseBlock();
+		ValueType vt = (list.get(0)._2).getValueType();
+		TensorBlock out = new TensorBlock(idims, vt).allocateBlock();
 
 		//copy blocks one-at-a-time into output matrix block
 		for( Tuple2<TensorIndexes, TensorBlock> keyval : list )
 		{
 			//unpack index-block pair
 			TensorIndexes ix = keyval._1();
-			BasicTensor block = (BasicTensor) keyval._2();
+			TensorBlock block = keyval._2();
 
 			//compute row/column block offsets
 			int[] lower = new int[ix.getNumDims()];
