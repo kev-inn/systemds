@@ -196,7 +196,7 @@ public class TestUtils
 	/**
 	 * <p>
 	 * Compares the expected values calculated in Java by testcase and which are
-	 * in the normal filesystem, with those calculated by SystemML located in
+	 * in the normal filesystem, with those calculated by SystemDS located in
 	 * HDFS with Matrix Market format
 	 * </p>
 	 * 
@@ -289,7 +289,7 @@ public class TestUtils
 	/**
 	 * <p>
 	 * Compares the expected values calculated in Java by testcase and which are
-	 * in the normal filesystem, with those calculated by SystemML located in
+	 * in the normal filesystem, with those calculated by SystemDS located in
 	 * HDFS
 	 * </p>
 	 * 

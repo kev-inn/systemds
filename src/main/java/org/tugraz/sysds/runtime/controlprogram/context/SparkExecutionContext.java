@@ -216,7 +216,7 @@ public class SparkExecutionContext extends ExecutionContext
 		{
 			if(DMLScript.USE_LOCAL_SPARK_CONFIG) {
 				// For now set 4 cores for integration testing :)
-				SparkConf conf = createSystemMLSparkConf()
+				SparkConf conf = createSystemDSSparkConf()
 						.setMaster("local[*]").setAppName("My local integration test app");
 				// This is discouraged in spark but have added only for those testcase that cannot stop the context properly
 				// conf.set("spark.driver.allowMultipleContexts", "true");
@@ -225,8 +225,8 @@ public class SparkExecutionContext extends ExecutionContext
 			}
 			else //default cluster setup
 			{
-				//setup systemml-preferred spark configuration (w/o user choice)
-				SparkConf conf = createSystemMLSparkConf();
+				//setup systemds-preferred spark configuration (w/o user choice)
+				SparkConf conf = createSystemDSSparkConf();
 				_spctx = new JavaSparkContext(conf);
 			}
 
@@ -253,12 +253,12 @@ public class SparkExecutionContext extends ExecutionContext
 	}
 
 	/**
-	 * Sets up a SystemML-preferred Spark configuration based on the implicit
+	 * Sets up a SystemDS-preferred Spark configuration based on the implicit
 	 * default configuration (as passed via configurations from outside).
 	 *
 	 * @return spark configuration
 	 */
-	public static SparkConf createSystemMLSparkConf() {
+	public static SparkConf createSystemDSSparkConf() {
 		SparkConf conf = new SparkConf();
 
 		//always set unlimited result size (required for cp collect)
@@ -1635,7 +1635,7 @@ public class SparkExecutionContext extends ExecutionContext
 
 		public SparkClusterConfig()
 		{
-			SparkConf sconf = createSystemMLSparkConf();
+			SparkConf sconf = createSystemDSSparkConf();
 			_confOnly = true;
 
 			//parse version and config
@@ -1691,7 +1691,7 @@ public class SparkExecutionContext extends ExecutionContext
 
 		public void analyzeSparkConfiguationLegacy(SparkConf conf)  {
 			//ensure allocated spark conf
-			SparkConf sconf = (conf == null) ? createSystemMLSparkConf() : conf;
+			SparkConf sconf = (conf == null) ? createSystemDSSparkConf() : conf;
 			
 			//parse absolute executor memory
 			_memExecutor = UtilFunctions.parseMemorySize(
@@ -1709,7 +1709,7 @@ public class SparkExecutionContext extends ExecutionContext
 
 		public void analyzeSparkConfiguation(SparkConf conf) {
 			//ensure allocated spark conf
-			SparkConf sconf = (conf == null) ? createSystemMLSparkConf() : conf;
+			SparkConf sconf = (conf == null) ? createSystemDSSparkConf() : conf;
 			
 			//parse absolute executor memory, incl fixed cut off
 			_memExecutor = UtilFunctions.parseMemorySize(
@@ -1727,7 +1727,7 @@ public class SparkExecutionContext extends ExecutionContext
 
 		private void analyzeSparkParallelismConfiguation(SparkConf conf) {
 			//ensure allocated spark conf
-			SparkConf sconf = (conf == null) ? createSystemMLSparkConf() : conf;
+			SparkConf sconf = (conf == null) ? createSystemDSSparkConf() : conf;
 			
 			int numExecutors = sconf.getInt("spark.executor.instances", -1);
 			int numCoresPerExec = sconf.getInt("spark.executor.cores", -1);
