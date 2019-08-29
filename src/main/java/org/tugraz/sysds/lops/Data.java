@@ -318,7 +318,7 @@ public class Data extends Lop
 		if ( operation == OperationTypes.WRITE ) {
 			sb.append( OPERAND_DELIMITOR );
 			String fmt = "";
-			if (getDataType() == DataType.MATRIX || getDataType() == DataType.FRAME || getDataType() == DataType.TENSOR) {
+			if (getDataType() == DataType.MATRIX || getDataType() == DataType.FRAME) {
 				if ( oparams.getFormat() == Format.MM )
 					fmt = "matrixmarket";
 				else if (oparams.getFormat() == Format.TEXT)
@@ -420,7 +420,7 @@ public class Data extends Lop
 	}
 	
 	public String getCreateVarInstructions(String outputFileName, String outputLabel) {
-		if ( getDataType() == DataType.MATRIX || getDataType() == DataType.FRAME || getDataType() == DataType.TENSOR ) {
+		if ( getDataType() == DataType.MATRIX || getDataType() == DataType.FRAME ) {
 			
 			if ( isTransient() )
 				throw new LopsException("getInstructions() should not be called for transient nodes.");

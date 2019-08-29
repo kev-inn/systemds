@@ -57,7 +57,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 
 
@@ -413,26 +412,15 @@ public class HDFSTool
 		
 		//handle output dimensions
 		if( !dt.isScalar() ) {
-			if (dt.isTensor()) {
-				// we use `Long` instead of `long` so `mtd.put()` doesn't recognize the array as an object and fails
-				Object[] dims = Arrays.stream(dc.getDims()).boxed().toArray();
-				mtd.put(DataExpression.READDIMSPARAM, dims);
-				if (outinfo == OutputInfo.BinaryBlockOutputInfo) {
-					Object[] blks = Arrays.stream(dc.getBlockSizes()).boxed().toArray();
-					mtd.put(DataExpression.DIMSBLOCKCOUNTPARAM, blks);
+			mtd.put(DataExpression.READROWPARAM, dc.getRows());
+			mtd.put(DataExpression.READCOLPARAM, dc.getCols());
+			// handle output nnz and binary block configuration
+			if( dt.isMatrix() ) {
+				if (outinfo == OutputInfo.BinaryBlockOutputInfo ) {
+					mtd.put(DataExpression.ROWBLOCKCOUNTPARAM, dc.getRowsPerBlock());
+					mtd.put(DataExpression.COLUMNBLOCKCOUNTPARAM, dc.getColsPerBlock());
 				}
-			}
-			else {
-				mtd.put(DataExpression.READROWPARAM, dc.getRows());
-				mtd.put(DataExpression.READCOLPARAM, dc.getCols());
-				// handle output nnz and binary block configuration
-				if (dt.isMatrix()) {
-					if (outinfo == OutputInfo.BinaryBlockOutputInfo) {
-						mtd.put(DataExpression.ROWBLOCKCOUNTPARAM, dc.getRowsPerBlock());
-						mtd.put(DataExpression.COLUMNBLOCKCOUNTPARAM, dc.getColsPerBlock());
-					}
-					mtd.put(DataExpression.READNNZPARAM, dc.getNonZeros());
-				}
+				mtd.put(DataExpression.READNNZPARAM, dc.getNonZeros());
 			}
 		}
 			
@@ -458,38 +446,6 @@ public class HDFSTool
 		mtd.put(DataExpression.CREATEDPARAM, sdf.format(new Date()));
 
 		return mtd.toString(4); // indent with 4 spaces	
-	}
-
-	public static void readMetaDataFile(String mtdfile, ValueType vt, ValueType[] schema, DataType dt, DataCharacteristics dc,
-			OutputInfo outinfo, FileFormatProperties formatProperties) throws IOException {
-		Path path = new Path(mtdfile);
-		FileSystem fs = IOUtilFunctions.getFileSystem(path);
-		try (BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(path)))) {
-			OrderedJSONObject mtd = new OrderedJSONObject(br);
-			mtd.forEach((k,v) -> {
-				switch((String) k) {
-					case DataExpression.DATATYPEPARAM:
-						break;
-					case DataExpression.VALUETYPEPARAM:
-						break;
-					case DataExpression.SCHEMAPARAM:
-						break;
-					case DataExpression.READDIMSPARAM:
-						break;
-					case DataExpression.DIMSBLOCKCOUNTPARAM:
-						break;
-					case DataExpression.READROWPARAM:
-						break;
-					case DataExpression.READCOLPARAM:
-						break;
-					default:
-						break;
-				}
-			});
-		}
-		catch (Exception e) {
-			throw new IOException("Error creating and writing metadata JSON file", e);
-		}
 	}
 
 	public static double[][] readMatrixFromHDFS(String dir, InputInfo inputinfo, long rlen, long clen, int brlen, int bclen)

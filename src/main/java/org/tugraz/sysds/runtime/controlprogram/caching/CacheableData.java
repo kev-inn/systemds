@@ -940,22 +940,10 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 			
 			// when outputFormat is binaryblock, make sure that matrixCharacteristics has correct blocking dimensions
 			// note: this is only required if singlenode (due to binarycell default) 
-			if (dc instanceof MatrixCharacteristics) {
-				if (oinfo == OutputInfo.BinaryBlockOutputInfo && DMLScript.getGlobalExecMode() == ExecMode.SINGLE_NODE
-						&& (dc.getRowsPerBlock() != ConfigurationManager.getBlocksize() || dc.getColsPerBlock() != ConfigurationManager.getBlocksize()))
-					dc = new MatrixCharacteristics(dc.getRows(), dc.getCols(), ConfigurationManager.getBlocksize(), ConfigurationManager.getBlocksize(), dc.getNonZeros());
-			}
-			else {
-				if (oinfo == OutputInfo.BinaryBlockOutputInfo && DMLScript.getGlobalExecMode() == ExecMode.SINGLE_NODE) {
-					for (int i = 0; i < dc.getNumDims(); i++) {
-						if (dc.getBlockSize(i) != TensorCharacteristics.DEFAULT_BLOCK_SIZE[dc.getNumDims() - 2]) {
-							int[] blkSizes = new int[dc.getNumDims()];
-							Arrays.fill(blkSizes, TensorCharacteristics.DEFAULT_BLOCK_SIZE[dc.getNumDims() - 2]);
-							dc.setBlockSizes(blkSizes);
-							break;
-						}
-					}
-				}
+			if ( oinfo == OutputInfo.BinaryBlockOutputInfo && DMLScript.getGlobalExecMode() == ExecMode.SINGLE_NODE &&
+				(dc.getRowsPerBlock() != ConfigurationManager.getBlocksize() || dc.getColsPerBlock() != ConfigurationManager.getBlocksize()) )
+			{
+				dc = new MatrixCharacteristics(dc.getRows(), dc.getCols(), ConfigurationManager.getBlocksize(), ConfigurationManager.getBlocksize(), dc.getNonZeros());
 			}
 
 			//write the actual meta data file
