@@ -108,15 +108,7 @@ public abstract class DataCharacteristics implements Serializable {
 	}
 
 	public long[] getDims() {
-		return getLongDims();
-	}
-
-	public long[] getLongDims() {
-		throw new DMLRuntimeException("DataCharacteristics.getLongDims(): should never get called in the base class");
-	}
-
-	public int[] getIntDims() {
-		throw new DMLRuntimeException("DataCharacteristics.getIntDims(): should never get called in the base class");
+		throw new DMLRuntimeException("DataCharacteristics.getDims(): should never get called in the base class");
 	}
 
 	public TensorCharacteristics setDim(int i, long dim) {
@@ -127,7 +119,7 @@ public abstract class DataCharacteristics implements Serializable {
 		throw new DMLRuntimeException("DataCharacteristics.setDims(long[]): should never get called in the base class");
 	}
 
-	public long getBlockSize(int i) {
+	public int getBlockSize(int i) {
 		throw new DMLRuntimeException("DataCharacteristics.getBlockSize(int): should never get called in the base class");
 	}
 
@@ -148,7 +140,7 @@ public abstract class DataCharacteristics implements Serializable {
 	}
 
 	public long getNumBlocks(int i) {
-		throw new DMLRuntimeException("DataCharacteristics.setNumBlocks(i): should never get called in the base class");
+		throw new DMLRuntimeException("DataCharacteristics.getNumBlocks(i): should never get called in the base class");
 	}
 
 	public void setNonZeros(long nnz) {
