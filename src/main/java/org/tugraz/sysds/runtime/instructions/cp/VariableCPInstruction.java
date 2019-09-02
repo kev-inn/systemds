@@ -330,18 +330,8 @@ public class VariableCPInstruction extends CPInstruction implements LineageTrace
 		case CreateVariable:
 			// variable name
 			DataType dt = DataType.valueOf(parts[4]);
-			ValueType vt;
-			if (dt == DataType.MATRIX)
-				vt = ValueType.FP64;
-			else {
-				if (dt == DataType.TENSOR) {
-					//TODO choose correct value type
-					vt = ValueType.STRING;
-				}
-				else {
-					vt = ValueType.STRING;
-				}
-			}
+			//TODO choose correct value type for tensor
+			ValueType vt = dt==DataType.MATRIX ? ValueType.FP64 : ValueType.STRING;
 			int extSchema = (dt==DataType.FRAME && parts.length>=13) ? 1 : 0;
 			in1 = new CPOperand(parts[1], vt, dt);
 			// file name
@@ -651,7 +641,7 @@ public class VariableCPInstruction extends CPInstruction implements LineageTrace
 				TensorBlock tBlock = ec.getTensorInput(getInput1().getName());
 				if (tBlock.getNumDims() != 2 || tBlock.getNumRows() != 1 || tBlock.getNumColumns() != 1)
 					throw new DMLRuntimeException("Dimension mismatch - unable to cast tensor '" + getInput1().getName() + "' to scalar.");
-				ValueType vt = tBlock.isHeterogeneous() ? tBlock.getSchema()[0] : tBlock.getValueType();
+				ValueType vt = !tBlock.isBasic() ? tBlock.getSchema()[0] : tBlock.getValueType();
 				ec.setScalarOutput(output.getName(), ScalarObjectFactory
 					.createScalarObject(vt, tBlock.get(new int[] {0, 0})));
 				ec.releaseTensorInput(getInput1().getName());

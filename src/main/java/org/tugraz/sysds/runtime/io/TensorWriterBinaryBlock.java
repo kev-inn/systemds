@@ -83,10 +83,10 @@ public class TensorWriterBinaryBlock extends TensorWriter {
 				}
 				TensorIndexes indx = new TensorIndexes(tix);
 				TensorBlock block;
-				if (src.isHeterogeneous())
-					block = new TensorBlock(blockDims, src.getSchema()).allocateBlock();
+				if (!src.isBasic())
+					block = new TensorBlock(src.getSchema(), blockDims).allocateBlock();
 				else
-					block = new TensorBlock(blockDims, src.getValueType()).allocateBlock();
+					block = new TensorBlock(src.getValueType(), blockDims).allocateBlock();
 
 				//copy submatrix to block
 				src.slice(offsets, block);

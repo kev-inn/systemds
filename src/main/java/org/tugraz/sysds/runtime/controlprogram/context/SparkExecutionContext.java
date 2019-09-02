@@ -908,7 +908,7 @@ public class SparkExecutionContext extends ExecutionContext
 				offset[i] = (int) (blockIx[i] * tc.getBlockSize(i));
 				ix /= tc.getNumBlocks(i);
 			}
-			TensorBlock outBlock = new TensorBlock(outDims, mb.getValueType());
+			TensorBlock outBlock = new TensorBlock(mb.getValueType(), outDims);
 			outBlock = mb.slice(offset, outBlock);
 			//create key-value pair
 			for (int i = 0; i < blockIx.length; i++) {
@@ -1126,11 +1126,11 @@ public class SparkExecutionContext extends ExecutionContext
 		long t0 = DMLScript.STATISTICS ? System.nanoTime() : 0;
 
 		// TODO special case single block
-		int[] idims = Arrays.stream(dc.getDims()).mapToInt(i -> (int) i).toArray();
+		int[] idims = dc.getIntDims();
 		// TODO asynchronous allocation
 		List<Tuple2<TensorIndexes, TensorBlock>> list = rdd.collect();
 		ValueType vt = (list.get(0)._2).getValueType();
-		TensorBlock out = new TensorBlock(idims, vt).allocateBlock();
+		TensorBlock out = new TensorBlock(vt, idims).allocateBlock();
 
 		//copy blocks one-at-a-time into output matrix block
 		for( Tuple2<TensorIndexes, TensorBlock> keyval : list )

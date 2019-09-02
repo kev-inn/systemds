@@ -22,6 +22,8 @@ import org.tugraz.sysds.common.Types.ValueType;
 import org.tugraz.sysds.runtime.data.TensorBlock;
 import org.tugraz.sysds.runtime.util.UtilFunctions;
 
+import java.util.Arrays;
+
 
 public class TensorGetSetIndexingTest
 {
@@ -89,12 +91,12 @@ public class TensorGetSetIndexingTest
 
 	private TensorBlock getBasicTensor2(ValueType vt) {
 		// Todo: implement sparse for Tensor
-		return new TensorBlock(new int[] {DIM0,DIM1}, vt);
+		return new TensorBlock(vt, new int[] {DIM0,DIM1});
 	}
 
 	private TensorBlock getBasicTensor3(ValueType vt) {
 		// Todo: implement sparse for Tensor
-		return new TensorBlock(new int[] {DIM0,DIM1,DIM2}, vt);
+		return new TensorBlock(vt, new int[] {DIM0,DIM1,DIM2});
 	}
 
 	private TensorBlock setSequence(TensorBlock tb) {
@@ -114,7 +116,7 @@ public class TensorGetSetIndexingTest
 	}
 
 	private void checkSequence(TensorBlock tb) {
-		boolean isBool = tb.getValueType() == ValueType.BOOLEAN;
+		boolean isBool = (tb.isBasic() ? tb.getValueType() : tb.getSchema()[0]) == ValueType.BOOLEAN;
 		if( tb.getNumDims() == DIM0 ) {
 			int dim12 = DIM1 * DIM2;
 			for(int i=0; i<tb.getNumRows(); i++)
@@ -123,7 +125,7 @@ public class TensorGetSetIndexingTest
 						int val = i*dim12+j*DIM2+k;
 						double expected = isBool && val!=0 ? 1 : val;
 						Object actualObj = tb.get(new int[]{i, j, k});
-						ValueType vt = tb.isHeterogeneous() ? tb.getSchema()[j] : tb.getValueType();
+						ValueType vt = !tb.isBasic() ? tb.getSchema()[j] : tb.getValueType();
 						double actual = UtilFunctions.objectToDouble(vt, actualObj);
 						Assert.assertEquals(expected, actual, 0);
 					}
@@ -133,7 +135,7 @@ public class TensorGetSetIndexingTest
 				for(int j=0; j<DIM1; j++) {
 					int val = i*DIM1+j;
 					double expected = isBool && val!=0 ? 1 : val;
-					ValueType vt = tb.isHeterogeneous() ? tb.getSchema()[j] : tb.getValueType();
+					ValueType vt = !tb.isBasic() ? tb.getSchema()[j] : tb.getValueType();
 					double actual = UtilFunctions.objectToDouble(
 						vt, tb.get(new int[]{i, j}));
 					Assert.assertEquals(expected, actual, 0);
@@ -202,10 +204,14 @@ public class TensorGetSetIndexingTest
 	}
 
 	private TensorBlock getDataTensor2(ValueType vt) {
-		return new TensorBlock(new int[] {DIM0,DIM1}, vt);
+		ValueType[] schema = new ValueType[DIM1];
+		Arrays.fill(schema, vt);
+		return new TensorBlock(schema, new int[] {DIM0,DIM1});
 	}
 
 	private TensorBlock getDataTensor3(ValueType vt) {
-		return new TensorBlock(new int[] {DIM0,DIM1,DIM2}, vt);
+		ValueType[] schema = new ValueType[DIM1];
+		Arrays.fill(schema, vt);
+		return new TensorBlock(schema, new int[] {DIM0,DIM1,DIM2});
 	}
 }

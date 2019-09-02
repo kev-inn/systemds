@@ -83,7 +83,7 @@ public class TensorObject extends CacheableData<TensorBlock> {
 
 		//update matrix characteristics
 		DataCharacteristics tc = _metaData.getDataCharacteristics();
-		long[] dims = Arrays.stream(_data.getDims()).mapToLong(i -> i).toArray();
+		long[] dims = _metaData.getDataCharacteristics().getDims();
 		tc.setDims(dims);
 		tc.setNonZeros(_data.getNonZeros());
 	}

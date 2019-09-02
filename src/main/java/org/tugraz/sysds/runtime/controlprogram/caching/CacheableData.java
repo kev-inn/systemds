@@ -48,7 +48,6 @@ import org.tugraz.sysds.runtime.meta.DataCharacteristics;
 import org.tugraz.sysds.runtime.meta.MatrixCharacteristics;
 import org.tugraz.sysds.runtime.meta.MetaData;
 import org.tugraz.sysds.runtime.meta.MetaDataFormat;
-import org.tugraz.sysds.runtime.meta.TensorCharacteristics;
 import org.tugraz.sysds.runtime.util.HDFSTool;
 import org.tugraz.sysds.runtime.util.LocalFileUtils;
 import org.tugraz.sysds.utils.Statistics;
@@ -56,7 +55,6 @@ import org.tugraz.sysds.utils.Statistics;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
@@ -894,24 +892,10 @@ public abstract class CacheableData<T extends CacheBlock> extends Data
 	{
 		MetaDataFormat iimd = (MetaDataFormat) _metaData;
 		DataCharacteristics dc = iimd.getDataCharacteristics();
-		if (this instanceof TensorObject) {
-			long[] dims = dc.getDims();
-			return readBlobFromHDFS(fname, dims);
-		}
-		else {
-			return readBlobFromHDFS(fname, dc.getRows(), dc.getCols());
-		}
+		return readBlobFromHDFS(fname, dc.getDims());
 	}
 
-	protected T readBlobFromHDFS(String fname, long rlen, long clen)
-		throws IOException {
-		throw new DMLRuntimeException("CacheableData.readBlobFromHDFS(String,long,long) should never be called in base class.");
-	}
-
-	protected T readBlobFromHDFS(String fname, long[] dims)
-			throws IOException {
-		throw new DMLRuntimeException("CacheableData.readBlobFromHDFS(String,long[]) should never be called in base class.");
-	}
+	protected abstract T readBlobFromHDFS(String fname, long[] dims) throws IOException;
 
 	protected abstract T readBlobFromRDD(RDDObject rdd, MutableBoolean status)
 		throws IOException;

@@ -17,7 +17,6 @@
 
 package org.tugraz.sysds.test.functions.data;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.tugraz.sysds.common.Types.ValueType;
 import org.tugraz.sysds.runtime.DMLRuntimeException;
@@ -29,6 +28,8 @@ import org.tugraz.sysds.runtime.util.DataConverter;
 import org.tugraz.sysds.test.TestUtils;
 
 import java.util.Arrays;
+
+import static org.tugraz.sysds.test.TestUtils.compareTensorBlocks;
 
 
 public class TensorTextCellTest {
@@ -140,16 +141,5 @@ public class TensorTextCellTest {
 	private TensorBlock createDataTensor(ValueType vt, int rows, int cols, double sparsity) {
 		return DataConverter.convertToTensorBlock(TestUtils.round(
 				MatrixBlock.randOperations(rows, cols, sparsity, 0, 10, "uniform", 7)), vt, false);
-	}
-
-	private void compareTensorBlocks(TensorBlock tb1, TensorBlock tb2) {
-		Assert.assertEquals(tb1.getValueType(), tb2.getValueType());
-		Assert.assertArrayEquals(tb1.getSchema(), tb2.getSchema());
-		Assert.assertEquals(tb1.getNumRows(), tb2.getNumRows());
-		Assert.assertEquals(tb1.getNumColumns(), tb2.getNumColumns());
-		for (int i = 0; i < tb1.getNumRows(); i++)
-			for (int j = 0; j < tb1.getNumColumns(); j++)
-				Assert.assertEquals(Double.valueOf(tb1.get(i, j)),
-						Double.valueOf(tb2.get(i, j)));
 	}
 }

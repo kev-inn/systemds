@@ -26,6 +26,7 @@ import org.tugraz.sysds.conf.ConfigurationManager;
 import org.tugraz.sysds.runtime.DMLRuntimeException;
 import org.tugraz.sysds.runtime.data.TensorBlock;
 import org.tugraz.sysds.runtime.data.TensorIndexes;
+import org.tugraz.sysds.runtime.util.UtilFunctions;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -51,9 +52,9 @@ public class TensorReaderBinaryBlock extends TensorReader {
 		int[] idims = Arrays.stream(dims).mapToInt(i -> (int) i).toArray();
 		TensorBlock ret;
 		if (schema.length == 1)
-			ret = new TensorBlock(idims, schema[0]).allocateBlock();
+			ret = new TensorBlock(schema[0], idims).allocateBlock();
 		else
-			ret = new TensorBlock(idims, schema).allocateBlock();
+			ret = new TensorBlock(schema, idims).allocateBlock();
 		TensorIndexes key = new TensorIndexes();
 		// TODO reuse blocks
 
@@ -68,19 +69,7 @@ public class TensorReaderBinaryBlock extends TensorReader {
 
 					int[] lower = new int[blen.length];
 					int[] upper = new int[lower.length];
-					for (int i = 0; i < blen.length; i++) {
-						lower[i] = (int) (key.getIndex(i) - 1) * blen[i];
-						upper[i] = lower[i] + value.getDim(i) - 1;
-					}
-					upper[upper.length - 1]++;
-					for (int i = upper.length - 1; i > 0; i--) {
-						if (upper[i] == dims[i]) {
-							upper[i] = 0;
-							upper[i - 1]++;
-						}
-						else
-							break;
-					}
+					UtilFunctions.getBlockBounds(key, dims, blen, lower, upper);
 
 					ret.copy(lower, upper, value);
 				}

@@ -64,7 +64,7 @@ public class TensorWriterTextCell extends TensorWriter {
 			for (long i = 0; i < src.getLength(); i++) {
 				Object obj = src.get(ix);
 				boolean skip;
-				if (src.isHeterogeneous())
+				if (!src.isBasic())
 					skip = UtilFunctions.objectToDouble(src.getSchema()[ix[1]], obj) == 0.0;
 				else
 					skip = UtilFunctions.objectToDouble(src.getValueType(), obj) == 0.0;

@@ -32,51 +32,55 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Arrays;
 
 public class TensorBlock implements CacheBlock, Externalizable {
 	private static final long serialVersionUID = -8768054067319422277L;
-
+	
+	private enum SERIALIZED_TYPES {
+		EMPTY, BASIC, DATA
+	}
+	
 	public static final int[] DEFAULT_DIMS = new int[]{0, 0};
 	public static final ValueType DEFAULT_VTYPE = ValueType.FP64;
 
 	private int[] _dims;
-	private boolean _heterogeneous;
+	private boolean _basic = true;
 
 	private DataTensorBlock _dataTensor = null;
 	private BasicTensorBlock _basicTensor = null;
 
 	public TensorBlock() {
-		this(DEFAULT_DIMS, false);
+		this(DEFAULT_DIMS, true);
 	}
 
-	public TensorBlock(int[] dims, boolean heterogeneous) {
+	public TensorBlock(int[] dims, boolean basic) {
 		_dims = dims;
-		_heterogeneous = heterogeneous;
+		_basic = basic;
 	}
 
-	public TensorBlock(int[] dims, ValueType vt) {
-		this(dims, false);
+	public TensorBlock(ValueType vt, int[] dims) {
+		this(dims, true);
 		_basicTensor = new BasicTensorBlock(vt, dims, false);
 	}
 
-	public TensorBlock(int[] dims, ValueType[] schema) {
-		this(dims, true);
+	public TensorBlock(ValueType[] schema, int[] dims) {
+		this(dims, false);
 		_dataTensor = new DataTensorBlock(schema, dims);
 	}
 
 	public TensorBlock(double value) {
 		_dims = new int[]{1, 1};
-		_heterogeneous = false;
 		_basicTensor = new BasicTensorBlock(value);
 	}
 
 	public TensorBlock(BasicTensorBlock basicTensor) {
-		this(basicTensor._dims, false);
+		this(basicTensor._dims, true);
 		_basicTensor = basicTensor;
 	}
 
 	public TensorBlock(DataTensorBlock dataTensor) {
-		this(dataTensor._dims, true);
+		this(dataTensor._dims, false);
 		_dataTensor = dataTensor;
 	}
 
@@ -85,53 +89,53 @@ public class TensorBlock implements CacheBlock, Externalizable {
 	}
 
 	public void reset() {
-		if (_heterogeneous) {
-			if (_dataTensor == null)
-				_dataTensor = new DataTensorBlock(DEFAULT_VTYPE, _dims);
-			_dataTensor.reset();
-		}
-		else {
+		if (_basic) {
 			if (_basicTensor == null)
 				_basicTensor = new BasicTensorBlock(DEFAULT_VTYPE, _dims);
 			_basicTensor.reset();
+		}
+		else {
+			if (_dataTensor == null)
+				_dataTensor = new DataTensorBlock(DEFAULT_VTYPE, _dims);
+			_dataTensor.reset();
 		}
 	}
 
 	public void reset(int[] dims) {
 		_dims = dims;
-		if (_heterogeneous) {
-			if (_dataTensor == null)
-				_dataTensor = new DataTensorBlock(DEFAULT_VTYPE, _dims);
-			_dataTensor.reset(dims);
-		}
-		else {
+		if (_basic) {
 			if (_basicTensor == null)
 				_basicTensor = new BasicTensorBlock(DEFAULT_VTYPE, _dims);
 			_basicTensor.reset(dims);
 		}
+		else {
+			if (_dataTensor == null)
+				_dataTensor = new DataTensorBlock(DEFAULT_VTYPE, _dims);
+			_dataTensor.reset(dims);
+		}
 	}
 
-	public boolean isHeterogeneous() {
-		return _heterogeneous;
+	public boolean isBasic() {
+		return _basic;
 	}
 
 	public boolean isAllocated() {
-		if (_heterogeneous)
-			return _dataTensor != null && _dataTensor.isAllocated();
-		else
+		if (_basic)
 			return _basicTensor != null && _basicTensor.isAllocated();
+		else
+			return _dataTensor != null && _dataTensor.isAllocated();
 	}
 
 	public TensorBlock allocateBlock() {
-		if (_heterogeneous) {
-			if (_dataTensor == null)
-				_dataTensor = new DataTensorBlock(DEFAULT_VTYPE, _dims);
-			_dataTensor.allocateBlock();
-		}
-		else {
+		if (_basic) {
 			if (_basicTensor == null)
 				_basicTensor = new BasicTensorBlock(DEFAULT_VTYPE, _dims);
 			_basicTensor.allocateBlock();
+		}
+		else {
+			if (_dataTensor == null)
+				_dataTensor = new DataTensorBlock(DEFAULT_VTYPE, _dims);
+			_dataTensor.allocateBlock();
 		}
 		return this;
 	}
@@ -145,19 +149,25 @@ public class TensorBlock implements CacheBlock, Externalizable {
 	}
 
 	public ValueType getValueType() {
-		if (!_heterogeneous)
+		if (_basic)
 			return _basicTensor == null ? DEFAULT_VTYPE : _basicTensor.getValueType();
 		else
 			return null;
 	}
 
 	public ValueType[] getSchema() {
-		if (_heterogeneous) {
-			//TODO should we return array with col DEFAULT_VTYPE elements instead
-			return _dataTensor == null ? new ValueType[0] : _dataTensor.getSchema();
-		}
-		else
+		if (_basic)
 			return null;
+		else {
+			if (_dataTensor == null) {
+				//TODO perf, do not fill, instead save schema
+				ValueType[] schema = new ValueType[getDim(1)];
+				Arrays.fill(schema, DEFAULT_VTYPE);
+				return schema;
+			}
+			else
+				return _dataTensor.getSchema();
+		}
 	}
 
 	public int getNumDims() {
@@ -219,6 +229,10 @@ public class TensorBlock implements CacheBlock, Externalizable {
 		return _dims;
 	}
 
+	public long[] getLongDims() {
+		return Arrays.stream(_dims).mapToLong(i -> i).toArray();
+	}
+
 	/**
 	 * Calculates the next index array. Note that if the given index array was the last element, the next index will
 	 * be the first one.
@@ -272,61 +286,81 @@ public class TensorBlock implements CacheBlock, Externalizable {
 	}
 
 	public boolean isEmpty(boolean safe) {
-		if (_heterogeneous)
-			return _dataTensor == null || _dataTensor.isEmpty(safe);
-		else
+		if (_basic)
 			return _basicTensor == null || _basicTensor.isEmpty(safe);
+		else
+			return _dataTensor == null || _dataTensor.isEmpty(safe);
 	}
 
 	public long getNonZeros() {
 		if (!isAllocated())
 			return 0;
-		if (_heterogeneous)
-			return _dataTensor.getNonZeros();
-		else
+		if (_basic)
 			return _basicTensor.getNonZeros();
+		else
+			return _dataTensor.getNonZeros();
 	}
 
 	public Object get(int[] ix) {
-		if (_heterogeneous)
-			return _dataTensor.get(ix);
-		else
+		if (_basic && _basicTensor != null)
 			return _basicTensor.get(ix);
+		else if (_dataTensor != null)
+			return _dataTensor.get(ix);
+		return 0.0;
 	}
 
 	public double get(int r, int c) {
-		if (_heterogeneous)
-			return _dataTensor.get(r, c);
-		else
+		if (_basic && _basicTensor != null)
 			return _basicTensor.get(r, c);
+		else if (_dataTensor != null)
+			return _dataTensor.get(r, c);
+		return 0.0;
 	}
 
 	public void set(Object v) {
-		if (_heterogeneous)
-			_dataTensor.set(v);
-		else
+		if (_basic) {
+			if (_basicTensor == null)
+				_basicTensor = new BasicTensorBlock(DEFAULT_VTYPE, _dims, false);
 			_basicTensor.set(v);
+		}
+		else {
+			if (_dataTensor == null)
+				_dataTensor = new DataTensorBlock(getSchema(), _dims);
+			_dataTensor.set(v);
+		}
 	}
 
 	public void set(MatrixBlock other) {
-		if (_heterogeneous)
-			throw new DMLRuntimeException("TensorBlock.set(MatrixBlock) is not yet implemented for heterogeneous tensors");
-		else
+		if (_basic)
 			_basicTensor.set(other);
+		else
+			throw new DMLRuntimeException("TensorBlock.set(MatrixBlock) is not yet implemented for heterogeneous tensors");
 	}
 
 	public void set(int[] ix, Object v) {
-		if (_heterogeneous)
-			_dataTensor.set(ix, v);
-		else
+		if (_basic) {
+			if (_basicTensor == null)
+				_basicTensor = new BasicTensorBlock(DEFAULT_VTYPE, _dims, false);
 			_basicTensor.set(ix, v);
+		}
+		else {
+			if (_dataTensor == null)
+				_dataTensor = new DataTensorBlock(getSchema(), _dims);
+			_dataTensor.set(ix, v);
+		}
 	}
 
 	public void set(int r, int c, double v) {
-		if (_heterogeneous)
-			_dataTensor.set(r, c, v);
-		else
+		if (_basic) {
+			if (_basicTensor == null)
+				_basicTensor = new BasicTensorBlock(DEFAULT_VTYPE, _dims, false);
 			_basicTensor.set(r, c, v);
+		}
+		else {
+			if (_dataTensor == null)
+				_dataTensor = new DataTensorBlock(getSchema(), _dims);
+			_dataTensor.set(r, c, v);
+		}
 	}
 
 	/**
@@ -364,34 +398,34 @@ public class TensorBlock implements CacheBlock, Externalizable {
 
 	public TensorBlock copy(TensorBlock src) {
 		_dims = src._dims.clone();
-		_heterogeneous = src._heterogeneous;
-		if (_heterogeneous) {
-			_basicTensor = null;
-			_dataTensor = src._dataTensor == null ? null : new DataTensorBlock(src._dataTensor);
-		}
-		else {
+		_basic = src._basic;
+		if (_basic) {
 			_dataTensor = null;
 			_basicTensor = src._basicTensor == null ? null : new BasicTensorBlock(src._basicTensor);
+		}
+		else {
+			_basicTensor = null;
+			_dataTensor = src._dataTensor == null ? null : new DataTensorBlock(src._dataTensor);
 		}
 		return this;
 	}
 
 	public TensorBlock copy(int[] lower, int[] upper, TensorBlock src) {
-		if (_heterogeneous) {
-			if (src._heterogeneous) {
-				_dataTensor.copy(lower, upper, src._dataTensor);
+		if (_basic) {
+			if (src._basic) {
+				_basicTensor.copy(lower, upper, src._basicTensor);
 			}
 			else {
-				// TODO perf
-				_dataTensor.copy(lower, upper, new DataTensorBlock(src._basicTensor));
+				throw new DMLRuntimeException("Copying `DataTensor` into `BasicTensor` is not a safe operation.");
 			}
 		}
 		else {
-			if (src._heterogeneous) {
-				throw new DMLRuntimeException("Copying `DataTensor` into `BasicTensor` is not a safe operation.");
+			if (src._basic) {
+				// TODO perf
+				_dataTensor.copy(lower, upper, new DataTensorBlock(src._basicTensor));
 			}
 			else {
-				_basicTensor.copy(lower, upper, src._basicTensor);
+				_dataTensor.copy(lower, upper, src._dataTensor);
 			}
 		}
 		return this;
@@ -401,18 +435,18 @@ public class TensorBlock implements CacheBlock, Externalizable {
 	// form definition
 	@Override
 	public long getExactSerializedSize() {
-		// header size (_isDataTensor, _dims.length + _dims[*], isAllocated)
+		// header size (_basic, _dims.length + _dims[*], type)
 		long size = 1 + 4 * (1 + _dims.length) + 1;
 		if (isAllocated()) {
-			if (_heterogeneous) {
+			if (_basic) {
+				size += 1 + getExactBlockDataSerializedSize(_basicTensor);
+			}
+			else {
 				size += _dataTensor._schema.length;
 				for (BasicTensorBlock bt : _dataTensor._colsdata) {
 					if (bt != null)
 						size += getExactBlockDataSerializedSize(bt);
 				}
-			}
-			else {
-				size += 1 + getExactBlockDataSerializedSize(_basicTensor);
 			}
 		}
 		return size;
@@ -453,31 +487,30 @@ public class TensorBlock implements CacheBlock, Externalizable {
 
 	@Override
 	public void write(DataOutput out) throws IOException {
-		//step 1: write header (isDataTensor, dims length, dims)
-		out.writeBoolean(_heterogeneous);
+		//step 1: write header (_basic, dims length, dims)
+		out.writeBoolean(_basic);
 		out.writeInt(_dims.length);
 		for (int dim : _dims)
 			out.writeInt(dim);
 
-		//step 2: write flag if tensor is allocated or not
+		//step 2: write block type
+		//step 3: if tensor allocated write its data
 		if (!isAllocated())
-			out.writeBoolean(false);
+			out.writeByte(SERIALIZED_TYPES.EMPTY.ordinal());
+		else if (_basic) {
+			out.writeByte(SERIALIZED_TYPES.BASIC.ordinal());
+			out.writeByte(_basicTensor.getValueType().ordinal());
+			writeBlockData(out, _basicTensor);
+		}
 		else {
-			//step 3: if tensor allocated write its data
-			out.writeBoolean(true);
-			if (_heterogeneous) {
-				//write schema and colIndexes
-				for (int i = 0; i < getDim(1); i++)
-					out.writeByte(_dataTensor._schema[i].ordinal());
-				for (BasicTensorBlock bt : _dataTensor._colsdata) {
-					//present flag
-					if (bt != null)
-						writeBlockData(out, bt);
-				}
-			}
-			else {
-				out.writeByte(_basicTensor.getValueType().ordinal());
-				writeBlockData(out, _basicTensor);
+			out.writeByte(SERIALIZED_TYPES.DATA.ordinal());
+			//write schema and colIndexes
+			for (int i = 0; i < getDim(1); i++)
+				out.writeByte(_dataTensor._schema[i].ordinal());
+			for (BasicTensorBlock bt : _dataTensor._colsdata) {
+				//present flag
+				if (bt != null)
+					writeBlockData(out, bt);
 			}
 		}
 	}
@@ -498,21 +531,11 @@ public class TensorBlock implements CacheBlock, Externalizable {
 				for (int j = 0; j < odims; j++) {
 					ix[ix.length - 1] = j;
 					switch (bt._vt) {
-						case FP32:
-							out.writeFloat((float) a.get(i, j));
-							break;
-						case FP64:
-							out.writeDouble(a.get(i, j));
-							break;
-						case INT32:
-							out.writeInt((int) a.getLong(ix));
-							break;
-						case INT64:
-							out.writeLong(a.getLong(ix));
-							break;
-						case BOOLEAN:
-							out.writeBoolean(a.get(i, j) != 0);
-							break;
+						case FP32: out.writeFloat((float) a.get(i, j)); break;
+						case FP64: out.writeDouble(a.get(i, j)); break;
+						case INT32: out.writeInt((int) a.getLong(ix)); break;
+						case INT64: out.writeLong(a.getLong(ix)); break;
+						case BOOLEAN: out.writeBoolean(a.get(i, j) != 0); break;
 						case STRING:
 							String s = a.getString(ix);
 							out.writeUTF(s == null ? "" : s);
@@ -528,16 +551,22 @@ public class TensorBlock implements CacheBlock, Externalizable {
 
 	@Override
 	public void readFields(DataInput in) throws IOException {
-		//step 1: read header (isDataTensor, dims length, dims)
-		_heterogeneous = in.readBoolean();
+		//step 1: read header (_basic, dims length, dims)
+		_basic = in.readBoolean();
 		_dims = new int[in.readInt()];
 		for (int i = 0; i < _dims.length; i++)
 			_dims[i] = in.readInt();
 
-		//step 2: read flag if tensor is allocated or not
-		if (in.readBoolean()) {
-			//step 3: if tensor allocated read its data
-			if (_heterogeneous) {
+		//step 2: read block type
+		//step 3: if tensor allocated read its data
+		switch (SERIALIZED_TYPES.values()[in.readByte()]) {
+			case EMPTY:
+				break;
+			case BASIC:
+				_basicTensor = new BasicTensorBlock(ValueType.values()[in.readByte()], _dims);
+				readBlockData(in, _basicTensor);
+				break;
+			case DATA:
 				//read schema and colIndexes
 				ValueType[] schema = new ValueType[getDim(1)];
 				for (int i = 0; i < getDim(1); i++)
@@ -548,11 +577,7 @@ public class TensorBlock implements CacheBlock, Externalizable {
 					if (_dataTensor._colsdata[i] != null)
 						readBlockData(in, _dataTensor._colsdata[i]);
 				}
-			}
-			else {
-				_basicTensor = new BasicTensorBlock(ValueType.values()[in.readByte()], _dims);
-				readBlockData(in, _basicTensor);
-			}
+				break;
 		}
 	}
 

@@ -382,16 +382,13 @@ public class BasicTensorBlock implements Serializable {
 	}
 
 	public void set(BasicTensorBlock other) {
-		if (_sparse) {
+		if (_sparse)
 			throw new NotImplementedException();
-		}
 		else {
-			if (other.isSparse()) {
+			if (other.isSparse())
 				throw new NotImplementedException();
-			}
-			else {
+			else
 				_denseBlock.set(0, _dims[0], 0, _denseBlock.getCumODims(0), other.getDenseBlock());
-			}
 		}
 	}
 

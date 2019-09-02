@@ -108,8 +108,13 @@ public class TensorCharacteristics extends DataCharacteristics
 	}
 
 	@Override
-	public long[] getDims() {
+	public long[] getLongDims() {
 		return _dims;
+	}
+
+	@Override
+	public int[] getIntDims() {
+		return Arrays.stream(getLongDims()).mapToInt(i -> (int) i).toArray();
 	}
 
 	@Override

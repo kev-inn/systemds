@@ -68,7 +68,7 @@ public class ReshapeCPInstruction extends UnaryCPInstruction {
 	public void processInstruction(ExecutionContext ec) {
 		if (output.getDataType() == Types.DataType.TENSOR) {
 			int[] dims = DataConverter.getTensorDimensions(ec, _opDims);
-			TensorBlock out = new TensorBlock(dims, output.getValueType());
+			TensorBlock out = new TensorBlock(output.getValueType(), dims);
 			if (input1.getDataType() == Types.DataType.TENSOR) {
 				//get Tensor-data from tensor (reshape)
 				// TODO support DataTensor

@@ -168,7 +168,7 @@ public class AggregateUnarySPInstruction extends UnarySPInstruction {
 			//this also includes implicit maintenance of data characteristics
 			// TODO generalize to drop depending on location of correction
 			// TODO support DataTensor
-			TensorBlock out4 = new TensorBlock(new int[]{1, 1}, out3.getValueType());
+			TensorBlock out4 = new TensorBlock(out3.getValueType(), new int[]{1, 1});
 			out4.set(0, 0, out3.get(0, 0));
 			sec.setTensorOutput(output.getName(), out4);
 		}
@@ -343,7 +343,7 @@ public class AggregateUnarySPInstruction extends UnarySPInstruction {
 
 			//always drop correction since no aggregation
 			// TODO generalize to drop depending on location of correction
-			TensorBlock out = new TensorBlock(new int[]{1, 1}, blkOut.getValueType());
+			TensorBlock out = new TensorBlock(blkOut.getValueType(), new int[]{1, 1});
 			out.set(0, 0, blkOut.get(0, 0));
 
 			//output new tuple

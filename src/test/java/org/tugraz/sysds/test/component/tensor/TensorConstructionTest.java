@@ -258,7 +258,7 @@ public class TensorConstructionTest {
 		TensorBlock tb = new TensorBlock();
 		Assert.assertArrayEquals(null, tb.getSchema());
 		Assert.assertEquals(ValueType.FP64, tb.getValueType());
-		Assert.assertFalse(tb.isHeterogeneous());
+		Assert.assertTrue(tb.isBasic());
 		Assert.assertNull(tb.getDataTensor());
 		Assert.assertFalse(tb.isAllocated());
 		Assert.assertEquals(2, tb.getNumDims());
@@ -270,10 +270,10 @@ public class TensorConstructionTest {
 
 	@Test
 	public void testMetaHeterogeneousTensorBlock() {
-		TensorBlock tb = new TensorBlock(new int[]{1, 1}, true);
-		Assert.assertArrayEquals(new ValueType[0], tb.getSchema());
+		TensorBlock tb = new TensorBlock(new int[]{1, 1}, false);
+		Assert.assertArrayEquals(new ValueType[]{ValueType.FP64}, tb.getSchema());
 		Assert.assertNull(tb.getValueType());
-		Assert.assertTrue(tb.isHeterogeneous());
+		Assert.assertFalse(tb.isBasic());
 		Assert.assertNull(tb.getBasicTensor());
 		Assert.assertNull(tb.getDataTensor());
 		Assert.assertFalse(tb.isAllocated());
@@ -286,10 +286,10 @@ public class TensorConstructionTest {
 
 	@Test
 	public void testMetaHomogeneousTensorBlock() {
-		TensorBlock tb = new TensorBlock(new int[]{1, 1}, false);
+		TensorBlock tb = new TensorBlock(new int[]{1, 1}, true);
 		Assert.assertNull(tb.getSchema());
 		Assert.assertEquals(ValueType.FP64, tb.getValueType());
-		Assert.assertFalse(tb.isHeterogeneous());
+		Assert.assertTrue(tb.isBasic());
 		Assert.assertNull(tb.getBasicTensor());
 		Assert.assertNull(tb.getDataTensor());
 		Assert.assertFalse(tb.isAllocated());
@@ -306,7 +306,7 @@ public class TensorConstructionTest {
 		TensorBlock tb = new TensorBlock(val);
 		Assert.assertArrayEquals(null, tb.getSchema());
 		Assert.assertEquals(ValueType.FP64, tb.getValueType());
-		Assert.assertFalse(tb.isHeterogeneous());
+		Assert.assertTrue(tb.isBasic());
 		Assert.assertNull(tb.getDataTensor());
 		Assert.assertTrue(tb.isAllocated());
 		Assert.assertEquals(2, tb.getNumDims());
@@ -319,10 +319,10 @@ public class TensorConstructionTest {
 
 	@Test
 	public void testMetaTypedTensorBlock() {
-		TensorBlock tb = new TensorBlock(new int[]{11, 12, 13}, ValueType.INT64);
+		TensorBlock tb = new TensorBlock(ValueType.INT64, new int[]{11, 12, 13});
 		Assert.assertArrayEquals(null, tb.getSchema());
 		Assert.assertEquals(ValueType.INT64, tb.getValueType());
-		Assert.assertFalse(tb.isHeterogeneous());
+		Assert.assertTrue(tb.isBasic());
 		Assert.assertNull(tb.getDataTensor());
 		Assert.assertTrue(tb.isAllocated());
 		Assert.assertEquals(3, tb.getNumDims());
@@ -336,10 +336,10 @@ public class TensorConstructionTest {
 	@Test
 	public void testMetaSchemaTypedTensorBlock() {
 		ValueType[] schema = new ValueType[] {ValueType.BOOLEAN, ValueType.INT32, ValueType.STRING};
-		TensorBlock tb = new TensorBlock(new int[]{4, 3, 2}, schema);
+		TensorBlock tb = new TensorBlock(schema, new int[]{4, 3, 2});
 		Assert.assertArrayEquals(schema, tb.getSchema());
 		Assert.assertNull(tb.getValueType());
-		Assert.assertTrue(tb.isHeterogeneous());
+		Assert.assertFalse(tb.isBasic());
 		Assert.assertNull(tb.getBasicTensor());
 		Assert.assertTrue(tb.isAllocated());
 		Assert.assertEquals(3, tb.getNumDims());
@@ -355,7 +355,7 @@ public class TensorConstructionTest {
 		TensorBlock tb = new TensorBlock(new TensorBlock());
 		Assert.assertArrayEquals(null, tb.getSchema());
 		Assert.assertEquals(ValueType.FP64, tb.getValueType());
-		Assert.assertFalse(tb.isHeterogeneous());
+		Assert.assertTrue(tb.isBasic());
 		Assert.assertNull(tb.getDataTensor());
 		Assert.assertFalse(tb.isAllocated());
 		Assert.assertEquals(2, tb.getNumDims());
@@ -371,7 +371,7 @@ public class TensorConstructionTest {
 		TensorBlock tb = new TensorBlock(new TensorBlock(val));
 		Assert.assertArrayEquals(null, tb.getSchema());
 		Assert.assertEquals(ValueType.FP64, tb.getValueType());
-		Assert.assertFalse(tb.isHeterogeneous());
+		Assert.assertTrue(tb.isBasic());
 		Assert.assertNull(tb.getDataTensor());
 		Assert.assertTrue(tb.isAllocated());
 		Assert.assertEquals(2, tb.getNumDims());
@@ -384,10 +384,10 @@ public class TensorConstructionTest {
 
 	@Test
 	public void testMetaCopyTypedTensorBlock() {
-		TensorBlock tb = new TensorBlock(new TensorBlock(new int[]{11, 12, 13}, ValueType.INT64));
+		TensorBlock tb = new TensorBlock(new TensorBlock(ValueType.INT64, new int[]{11, 12, 13}));
 		Assert.assertArrayEquals(null, tb.getSchema());
 		Assert.assertEquals(ValueType.INT64, tb.getValueType());
-		Assert.assertFalse(tb.isHeterogeneous());
+		Assert.assertTrue(tb.isBasic());
 		Assert.assertNull(tb.getDataTensor());
 		Assert.assertTrue(tb.isAllocated());
 		Assert.assertEquals(3, tb.getNumDims());
@@ -401,10 +401,10 @@ public class TensorConstructionTest {
 	@Test
 	public void testMetaCopySchemaTypedTensorBlock() {
 		ValueType[] schema = new ValueType[] {ValueType.BOOLEAN, ValueType.INT32, ValueType.STRING};
-		TensorBlock tb = new TensorBlock(new TensorBlock(new int[]{4, 3, 2}, schema));
+		TensorBlock tb = new TensorBlock(new TensorBlock(schema, new int[]{4, 3, 2}));
 		Assert.assertArrayEquals(schema, tb.getSchema());
 		Assert.assertNull(tb.getValueType());
-		Assert.assertTrue(tb.isHeterogeneous());
+		Assert.assertFalse(tb.isBasic());
 		Assert.assertNull(tb.getBasicTensor());
 		Assert.assertTrue(tb.isAllocated());
 		Assert.assertEquals(3, tb.getNumDims());

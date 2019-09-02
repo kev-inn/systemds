@@ -61,23 +61,20 @@ public class TensorReaderTextCell extends TensorReader {
 
 		LongWritable key = new LongWritable();
 		Text value = new Text();
-		TensorBlock ret = null;
 		int[] idims = Arrays.stream(dims).mapToInt(i -> (int) i).toArray();
+		TensorBlock ret;
+		if (schema.length == 1)
+			ret = new TensorBlock(schema[0], idims).allocateBlock();
+		else
+			ret = new TensorBlock(schema, idims).allocateBlock();
 
 		try {
 			FastStringTokenizer st = new FastStringTokenizer(' ');
-
+			
+			int[] ix = new int[dims.length];
 			for (InputSplit split : splits) {
 				RecordReader<LongWritable, Text> reader = informat.getRecordReader(split, job, Reporter.NULL);
 				try {
-					if (schema.length == 1) {
-						ret = new TensorBlock(idims, schema[0]).allocateBlock();
-					}
-					else {
-						ret = new TensorBlock(idims, schema).allocateBlock();
-					}
-
-					int[] ix = new int[dims.length];
 					while (reader.next(key, value)) {
 						st.reset(value.toString());
 						for (int i = 0; i < ix.length; i++) {

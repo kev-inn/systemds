@@ -279,7 +279,7 @@ public class DataGenCPInstruction extends UnaryCPInstruction {
 			if (output.isTensor()) {
 				// TODO data tensor
 				int[] tDims = DataConverter.getTensorDimensions(ec, dims);
-				tensorBlock = new TensorBlock(tDims, output.getValueType()).allocateBlock();
+				tensorBlock = new TensorBlock(output.getValueType(), tDims).allocateBlock();
 				if (minValueStr.equals(maxValueStr)) {
 					if (minMaxAreDoubles)
 						tensorBlock.set(minValue);
