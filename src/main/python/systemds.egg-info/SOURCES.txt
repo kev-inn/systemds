@@ -1,0 +1,15 @@
+setup.py
+systemds/__init__.py
+systemds/classloader.py
+systemds/converters.py
+systemds/defmatrix.py
+systemds/mlcontext.py
+systemds/mlcontextRichard.py
+systemds/project_info.py
+systemds.egg-info/PKG-INFO
+systemds.egg-info/SOURCES.txt
+systemds.egg-info/dependency_links.txt
+systemds.egg-info/requires.txt
+systemds.egg-info/top_level.txt
+systemds/learn/__init__.py
+systemds/learn/algorithms.py

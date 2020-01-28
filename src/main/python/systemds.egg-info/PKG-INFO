@@ -1,0 +1,32 @@
+Metadata-Version: 1.1
+Name: systemds
+Version: 0.2.0
+Summary: Apache SystemDS is a distributed and declarative machine learning platform.
+Home-page: https://github.com/tugraz-isds/systemds
+Author: SystemDS
+Author-email: dev@systemds.apache.org
+License: Apache 2.0
+Description: 
+            
+            SystemDS is a versatile system for the end-to-end data science lifecycle from data integration, 
+            cleaning, and feature engineering, over efficient, local and distributed ML model training, 
+            to deployment and serving. To this end, we aim to provide a stack of declarative languages with
+            R-like syntax for 
+            (1) the different tasks of the data-science lifecycle, and 
+            (2) users with different expertise. 
+            These high-level scripts are compiled into hybrid execution plans of local, in-memory CPU and GPU operations, 
+            as well as distributed operations on Apache Spark. In contrast to existing systems 
+            - that either provide homogeneous tensors or 2D Datasets - and in order to serve the entire
+             data science lifecycle, the underlying data model are DataTensors, i.e.,
+             tensors (multi-dimensional arrays) whose first dimension may have a heterogeneous and nested schema.
+        
+            
+Platform: UNKNOWN
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Topic :: Scientific/Engineering :: Mathematics
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Software Development :: Libraries
