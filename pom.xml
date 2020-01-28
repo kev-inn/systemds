@@ -317,30 +317,22 @@
 			</plugin>
 
 			
-			<!-- Currently, all tests are integration tests. -->
-			<plugin>
+			<plugin> <!-- unit tests -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.18</version><!--$NO-MVN-MAN-VER$ -->
 				<configuration>
-
-					<!-- STDERR/STDOUT to individual .txt files instead of console -->
-					<redirectTestOutputToFile>true</redirectTestOutputToFile>
-
 					<includes>
 						<include>**/component/*.java</include>
-						
 					</includes>
-
 					<excludes>
 						<exclude>**/functions/**.java</exclude>
 						<exclude>**/applications/**.java</exclude>
 					</excludes>
-
 				</configuration>
 			</plugin>
 
-			<plugin>
+			<plugin> <!-- integration tests -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-failsafe-plugin</artifactId>
 	
@@ -353,19 +345,15 @@
 					</execution>
 				</executions>
 				<configuration>
-
+					<!-- STDERR/STDOUT to individual .txt files instead of console -->
 					<redirectTestOutputToFile>true</redirectTestOutputToFile>
-
 					<includes>
-						<include>**/component/*.java</include>
-						
+						<include>**/component/*/*.java</include>
 					</includes>
-
 					<excludes>
 						<exclude>**/functions/**.java</exclude>
 						<exclude>**/applications/**.java</exclude>
 					</excludes>
-
 				</configuration>
 			</plugin>
 
@@ -759,14 +747,6 @@
 			</build>
 		</profile>
 
-		<!-- profile to enable running tests on the GPU -->
-		<profile>
-			<id>gpuTests</id>
-			<properties>
-				<gpuTestsPath>**/integration/gpu/**/*Suite.java</gpuTestsPath>
-			</properties>
-		</profile>
-
 		<profile>
 			<!-- Can be used to ignore doclint javadoc issues -->
 			<id>ignore-doclint</id>
@@ -900,6 +880,107 @@
 								<goals>
 									<goal>jar</goal>
 								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-resources-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>copy-project-info-for-python</id>
+								<phase>prepare-package</phase>
+								<goals>
+									<goal>copy-resources</goal>
+								</goals>
+								<configuration>
+									<overwrite>true</overwrite>
+									<outputDirectory>${basedir}/src/main/python/systemds</outputDirectory>
+									<resources>
+										<resource>
+											<directory>${basedir}/src/main/resources/python</directory>
+											<includes>
+												<include>project_info.py</include>
+											</includes>
+											<filtering>true</filtering>
+										</resource>
+									</resources>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+						<version>1.6.0</version>
+						<executions>
+							<execution>
+								<id>generate-python-package-1</id>
+								<phase>package</phase>
+								<goals>
+									<goal>exec</goal>
+								</goals>
+								<configuration>
+									<executable>python</executable>
+									<workingDirectory>src/main/python</workingDirectory>
+									<arguments>
+										<argument>pre_setup.py</argument>
+									</arguments>
+								</configuration>
+							</execution>
+							<execution>
+								<id>generate-python-package-2</id>
+								<phase>package</phase>
+								<goals>
+									<goal>exec</goal>
+								</goals>
+								<configuration>
+									<executable>python</executable>
+									<workingDirectory>src/main/python</workingDirectory>
+									<arguments>
+										<argument>setup.py</argument>
+										<argument>sdist</argument>
+										<argument>--dist-dir=../../../target</argument>
+									</arguments>
+								</configuration>
+							</execution>
+							<execution>
+								<id>generate-python-package-3</id>
+								<phase>package</phase>
+								<goals>
+									<goal>exec</goal>
+								</goals>
+								<configuration>
+									<executable>python</executable>
+									<workingDirectory>src/main/python</workingDirectory>
+									<arguments>
+										<argument>post_setup.py</argument>
+									</arguments>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<!-- Attach python artifact so it can be installed and deployed. -->
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>build-helper-maven-plugin</artifactId>
+						<version>1.8</version>
+						<executions>
+							<execution>
+								<id>attach-python-artifact</id>
+								<phase>pre-integration-test</phase>
+								<goals>
+									<goal>attach-artifact</goal>
+								</goals>
+								<configuration>
+									<artifacts>
+										<artifact>
+											<file>${basedir}/target/${project.artifactId}-${project.version}-python.tar.gz</file>
+											<type>tar.gz</type>
+											<classifier>python</classifier>
+										</artifact>
+									</artifacts>
+								</configuration>
 							</execution>
 						</executions>
 					</plugin>
