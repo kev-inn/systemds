@@ -33,7 +33,6 @@ class TestAPI(unittest.TestCase):
         features, labels = generate_matrices_for_l2svm(10, seed=1304)
         # TODO calculate reference
         model = features.l2svm(labels).compute()
-        print(model)
         self.assertTrue(np.allclose(model, np.array([[-0.03277166],
                                                      [-0.00820981],
                                                      [0.00657115],
