@@ -14,8 +14,6 @@
 #  limitations under the License.
 # ------------------------------------------------------------------------------
 
-from __future__ import annotations
-
 from typing import Any, Dict, Optional, Collection, KeysView, Union
 
 from py4j.java_collections import JavaArray
@@ -32,7 +30,9 @@ class DMLScript:
     get the results.
 
     TODO caching
+
     TODO multiple outputs
+
     TODO rerun with different inputs without recompilation
     """
     dml_script: str

@@ -14,8 +14,6 @@
 #  limitations under the License.
 # ------------------------------------------------------------------------------
 
-from __future__ import annotations
-
 __all__ = ['OperationNode']
 
 import numpy as np
@@ -101,7 +99,7 @@ class OperationNode(DAGNode):
     def __floordiv__(self, other: VALID_ARITHMETIC_TYPES):
         return OperationNode('//', [self, other])
 
-    def __lt__(self, other) -> OperationNode:
+    def __lt__(self, other) -> 'OperationNode':
         return OperationNode('<', [self, other])
 
     def __le__(self, other):
@@ -119,7 +117,7 @@ class OperationNode(DAGNode):
     def __ne__(self, other):
         return OperationNode('!=', [self, other])
 
-    def l2svm(self, labels: DAGNode, **kwargs) -> OperationNode:
+    def l2svm(self, labels: DAGNode, **kwargs) -> 'OperationNode':
         """Perform l2svm on matrix with labels given.
 
         :return: `OperationNode` representing operation
@@ -129,7 +127,7 @@ class OperationNode(DAGNode):
         params_dict.update(kwargs)
         return OperationNode('l2svm', named_input_nodes=params_dict)
 
-    def sum(self, axis: int = None) -> OperationNode:
+    def sum(self, axis: int = None) -> 'OperationNode':
         """Calculate sum of matrix.
 
         :param axis: can be 0 or 1 to do either row or column sums
@@ -144,7 +142,7 @@ class OperationNode(DAGNode):
             return OperationNode('sum', [self], output_type=OutputType.DOUBLE)
         raise ValueError(f"Axis has to be either 0, 1 or None, for column, row or complete {self.operation}")
 
-    def mean(self, axis: int = None) -> OperationNode:
+    def mean(self, axis: int = None) -> 'OperationNode':
         """Calculate mean of matrix.
 
         :param axis: can be 0 or 1 to do either row or column means
@@ -159,7 +157,7 @@ class OperationNode(DAGNode):
             return OperationNode('mean', [self], output_type=OutputType.DOUBLE)
         raise ValueError(f"Axis has to be either 0, 1 or None, for column, row or complete {self.operation}")
 
-    def var(self, axis: int = None) -> OperationNode:
+    def var(self, axis: int = None) -> 'OperationNode':
         """Calculate variance of matrix.
 
         :param axis: can be 0 or 1 to do either row or column vars
@@ -174,14 +172,14 @@ class OperationNode(DAGNode):
             return OperationNode('var', [self], output_type=OutputType.DOUBLE)
         raise ValueError(f"Axis has to be either 0, 1 or None, for column, row or complete {self.operation}")
 
-    def abs(self) -> OperationNode:
+    def abs(self) -> 'OperationNode':
         """Calculate absolute.
 
         :return: `OperationNode` representing operation
         """
         return OperationNode('abs', [self])
 
-    def moment(self, moment, weights: DAGNode = None) -> OperationNode:
+    def moment(self, moment, weights: DAGNode = None) -> 'OperationNode':
         # TODO write tests
         self._check_matrix_op()
         unnamed_inputs = [self]
