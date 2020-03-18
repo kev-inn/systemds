@@ -20,8 +20,6 @@ from abc import ABC
 
 from py4j.java_gateway import JavaObject, JVMView
 
-__all__ = ['OutputType', 'DAGNode', 'VALID_INPUT_TYPES']
-
 
 class OutputType(Enum):
     MATRIX = auto()
