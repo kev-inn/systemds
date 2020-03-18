@@ -48,7 +48,7 @@ def get_gateway() -> JavaGateway:
             classpath = cp_separator.join([lib_cp, systemds_cp])
             process = subprocess.Popen(['java', '-cp', classpath, 'org.tugraz.sysds.pythonapi.PythonDMLScript'],
                                        stdout=subprocess.PIPE)
-            process.stdout.readline()  # wait for 'Gateway Server Started\n' written by server
+            print(process.stdout.readline())  # wait for 'Gateway Server Started\n' written by server
             assert process.poll() is None, "Could not start JMLC server"
             JAVA_GATEWAY = JavaGateway()
     return JAVA_GATEWAY
