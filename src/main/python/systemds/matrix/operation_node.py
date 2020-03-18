@@ -14,20 +14,20 @@
 #  limitations under the License.
 # ------------------------------------------------------------------------------
 
-__all__ = ['OperationNode']
-
 import numpy as np
 from py4j.java_gateway import JVMView, JavaObject
 
-from .utils import get_gateway, create_params_string
-from .converters import matrix_block_to_numpy
-from .script import DMLScript
-from .dag import OutputType, DAGNode, VALID_INPUT_TYPES
+from ..utils.helpers import get_gateway, create_params_string
+from ..utils.converters import matrix_block_to_numpy
+from ..script_building.script import DMLScript
+from ..script_building.dag import OutputType, DAGNode, VALID_INPUT_TYPES
 from typing import Union, Optional, Iterable, Dict, Sequence
 
 BINARY_OPERATIONS = ['+', '-', '/', '//', '*', '<', '<=', '>', '>=', '==', '!=']
 # TODO add numpy array
 VALID_ARITHMETIC_TYPES = Union[DAGNode, int, float]
+
+__all__ = ["OperationNode"]
 
 
 class OperationNode(DAGNode):
@@ -37,6 +37,15 @@ class OperationNode(DAGNode):
     def __init__(self, operation: str, unnamed_input_nodes: Iterable[VALID_INPUT_TYPES] = None,
                  named_input_nodes: Dict[str, VALID_INPUT_TYPES] = None,
                  output_type: OutputType = OutputType.MATRIX, is_python_local_data: bool = False):
+        """
+        Create general `OperationNode`
+
+        :param operation: The name of the DML function to execute
+        :param unnamed_input_nodes: inputs identified by their position, not name
+        :param named_input_nodes: inputs with their respective parameter name
+        :param output_type: type of the output in DML (double, matrix etc.)
+        :param is_python_local_data: if the data is local in python e.g. numpy arrays
+        """
         if unnamed_input_nodes is None:
             unnamed_input_nodes = []
         if named_input_nodes is None:

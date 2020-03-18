@@ -24,7 +24,7 @@ import numpy as np
 
 path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "../")
 sys.path.insert(0, path)
-from systemds import Matrix
+from systemds.matrix import Matrix
 
 
 class TestAPI(unittest.TestCase):
@@ -33,6 +33,7 @@ class TestAPI(unittest.TestCase):
         features, labels = generate_matrices_for_l2svm(10, seed=1304)
         # TODO calculate reference
         model = features.l2svm(labels).compute()
+        print(model)
         self.assertTrue(np.allclose(model, np.array([[-0.03277166],
                                                      [-0.00820981],
                                                      [0.00657115],

@@ -23,8 +23,6 @@ from importlib.util import find_spec
 from py4j.java_gateway import JavaGateway
 from py4j.protocol import Py4JNetworkError
 
-__all__ = ['get_gateway', 'create_params_string']
-
 JAVA_GATEWAY = None
 MODULE_NAME = 'systemds'
 
