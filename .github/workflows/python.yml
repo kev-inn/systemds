@@ -26,8 +26,8 @@ jobs:
       with:
         java-version: ${{ matrix.java }}
 
-    - name: clean, package
-      run: mvn clean package -DskipTests
+    - name: Maven clean & package
+      run: mvn clean package
 
     - name: Setup Python
       uses: actions/setup-python@v1
