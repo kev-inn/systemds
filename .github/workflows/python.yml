@@ -42,7 +42,7 @@ jobs:
       # TODO: Find out how to make if statement correctly: suggestion but not working: if: ${{ matrix.tests }} == P
       run: |
         cd src/main/python
-        alias python3=python
+        alias python3="python"
         python create_python_dist.py
 
     - name: Run all python tests
