@@ -36,7 +36,7 @@ jobs:
         architecture: 'x64'
 
     - name: Install pip Dependencies
-      run: pip install numpy py4j
+      run: pip install numpy py4j wheel
 
     - name: Build Python Package
       # TODO: Find out how to make if statement correctly: suggestion but not working: if: ${{ matrix.tests }} == P

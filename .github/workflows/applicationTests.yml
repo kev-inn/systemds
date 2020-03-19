@@ -32,7 +32,7 @@ jobs:
     - name: install R
       run: |
         sudo apt-get update
-        sudo apt-get -y install r-base wheel
+        sudo apt-get -y install r-base
     
     - name: set R environment
       run: |
