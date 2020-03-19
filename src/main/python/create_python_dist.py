@@ -16,6 +16,12 @@
 # ------------------------------------------------------------------------------
 import subprocess
 subprocess.run(["python3", "pre_setup.py"]).check_returncode()
-subprocess.run(["python3", "setup.py", "sdist", "bdist_wheel"]).check_returncode()
+proc = subprocess.Popen(["python3", "setup.py", "sdist", "bdist_wheel"],stdout=subprocess.PIPE)
+while True:
+  line = proc.stdout.readline()
+  if not line:
+    break
+  print "setup: ", line.rstrip()
+
 # post_setup.py moves the files from dist to target which we probably don't want for uploading them to pypi
 #subprocess.run(["python3", "post_setup.py"]).check_returncode()
