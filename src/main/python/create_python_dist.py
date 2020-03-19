@@ -21,7 +21,7 @@ while True:
   line = proc.stdout.readline()
   if not line:
     break
-  print "setup: ", line.rstrip()
+  print("setup: ", line.rstrip())
 
 # post_setup.py moves the files from dist to target which we probably don't want for uploading them to pypi
 #subprocess.run(["python3", "post_setup.py"]).check_returncode()
