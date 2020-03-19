@@ -21,7 +21,6 @@ limitations under the License.
 ## Basic steps
 
 The following steps have to be done for both cases
-
 - Build SystemDS with maven first `mvn package -DskipTests`, with the working directory being `SYSTEMDS_ROOT` (Root directory of SystemDS)
 - `cd` to this folder (basically `SYSTEMDS_ROOT/src/main/python`
 
