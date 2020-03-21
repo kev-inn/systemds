@@ -34,17 +34,23 @@ on:
 
 jobs:
   applicationsTests:
+    runs-on: ${{ matrix.os }}
     container:
-      image: node:10.16-jessie
+      image: node:18.04-bionic
+      env:
+        NODE_ENV: development
       ports:
         - 25333
-    runs-on: ${{ matrix.os }}
+      volumes:
+        - my_docker_volume:/volume_mount
+      options: --cpus 1
     strategy:
       fail-fast: false
       matrix:
         python-version: [3.6, 3.7, 3.8]
         os: [ubuntu-latest]
         java: [ 1.8 ]
+
     name:  Python Test
     steps:
     - uses: actions/checkout@v2
