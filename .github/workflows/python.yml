@@ -61,7 +61,9 @@ jobs:
         java-version: ${{ matrix.java }}
 
     - name: Maven clean & package
-      run: mvn clean package
+      run: |
+        apt install maven
+        mvn clean package
 
     - name: Setup Python
       uses: actions/setup-python@v1
