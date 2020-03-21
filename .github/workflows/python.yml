@@ -27,6 +27,7 @@ on:
   push:
     branches:
       - master
+      - fix_python_action
   pull_request:
     branches:
       - master
